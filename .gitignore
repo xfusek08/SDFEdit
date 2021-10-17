@@ -1,0 +1,9 @@
+
+# hide generated files
+build/
+
+# hide binary files
+bin/
+
+# dynamic vscode settings
+.vscode/settings.json
