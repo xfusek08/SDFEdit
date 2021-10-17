@@ -4,25 +4,6 @@
 using namespace std;
 using namespace rb;
 
-string const vsSrc = R".(
-    #version 460 core
-    out vec3 vColor;
-    void main(){
-        if(gl_VertexID == 0){gl_Position = vec4(0,0,0,1);vColor = vec3(1,0,0);}
-        if(gl_VertexID == 1){gl_Position = vec4(1,0,0,1);vColor = vec3(0,1,0);}
-        if(gl_VertexID == 2){gl_Position = vec4(0,1,0,1);vColor = vec3(0,0,1);}
-    }
-).";
-
-string const fsSrc = R".(
-    #version 460 core
-    in vec3 vColor;
-    layout(location=0)out vec4 fColor;
-    void main(){
-        fColor = vec4(vColor,1);
-    }
-).";
-
 gl::Program* program;
 GLuint vao;
 
@@ -37,8 +18,8 @@ bool Application::init()
     });
     
     program = new gl::Program(
-        new gl::Shader(GL_VERTEX_SHADER, vsSrc),
-        new gl::Shader(GL_FRAGMENT_SHADER, fsSrc)
+        new gl::Shader(GL_VERTEX_SHADER, RESOURCE_SHADERS_SCREEN_QUAD_VS),
+        new gl::Shader(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_RAY_MARCH_FS)
     );
     
     glCreateVertexArrays(1, &vao);
@@ -51,7 +32,7 @@ bool Application::init()
 void Application::draw()
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    glDrawArrays(GL_TRIANGLES,0,3);
+    glDrawArrays(GL_TRIANGLES,0,6);
 }
 
 bool Application::finalize()

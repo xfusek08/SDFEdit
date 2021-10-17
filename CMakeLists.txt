@@ -31,8 +31,8 @@ target_include_directories(${PROJECT_NAME}
 include(vendor/RenderBase/cmakeUtils/LoadResourceFiles.cmake)
 load_resource_definitions(resources RESOURCES_DEBUG_DEFINITIONS RESOURCES_RELEASE_DEFINITIONS)
 
-# message("${RESOURCES_DEBUG_DEFINITIONS}")
-# message("${RESOURCES_RELEASE_DEFINITIONS}")
+message("${RESOURCES_DEBUG_DEFINITIONS}")
+message("${RESOURCES_RELEASE_DEFINITIONS}")
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     $<$<CONFIG:DEBUG>:
