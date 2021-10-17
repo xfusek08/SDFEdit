@@ -28,7 +28,7 @@ GLuint vao;
 
 bool Application::init()
 {
-    state.eventDispatcher->subscribeToEvent(events::EVENT_CODE_KEY_PRESSED, this, [&](events::Event event) {
+    subscribeToEvent(events::EVENT_CODE_KEY_PRESSED, [&](events::Event event) {
         if (event.data.u16[0] == GLFW_KEY_ESCAPE) {
             state.status = app::Status::Exited;
             return true;
