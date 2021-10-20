@@ -29,16 +29,17 @@ bool Application::init()
         }
         return false;
     });
-    
-    Geometry geometry = Geometry(8); // lets have low-level resolution for now
-    Model    model = { 0, Transform() };
-    
-    geometry.addEdit(primitives::Sphere::createEdit());
-    
+        
     scene = new Scene();
-    scene->geometryPool = { geometry };
-    scene->modelPool    = { model };
+    scene->geometryPool = { Geometry(5) };
+    scene->modelPool    = { { 0, Transform() } };
     
+    scene->geometryPool[0].addEdit(primitives::Sphere::createEdit(opAdd, Transform(), 1));
+    scene->geometryPool[0].addEdit(primitives::Sphere::createEdit(opAdd, Transform({1, -1, 0}), 0.7));
+    scene->geometryPool[0].addEdit(primitives::Sphere::createEdit(opAdd, Transform({-1, -1, 0}), 0.7));
+    
+    scene->geometryPool[0].addEdit(primitives::Sphere::createEdit(opAdd, Transform({0, -4, 0}), 1.2));
+
     volume = buildVolumeForGeometry(scene->geometryPool[0]);
     
     // gpu data initiation

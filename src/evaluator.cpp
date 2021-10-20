@@ -12,7 +12,7 @@
 using namespace primitives;
 using namespace std;
 
-#define BOUNDING_OFFSET 0.05f
+#define BOUNDING_OFFSET 0.001f
 
 glm::f32 distanceToEdit(const GeometryEdit& edit, const glm::vec3& coords, const glm::vec3& centerCorrection)
 {
@@ -80,12 +80,14 @@ Volume* buildVolumeForGeometry(const Geometry& geometry)
     }
     
     for (uint32 z = 0; z < voxelCount; ++z) {
+        std::cout << "\n\n";
         for (uint32 y = 0; y < voxelCount; ++y) {
             std::cout << "[ ";
             for (uint32 x = 0; x < voxelCount; ++x) {
+                auto v = volume->getVoxel(x,y,z).sdfValue;
                 std::cout
-                    << std::setw( 1 ) << std::setprecision( 5 ) << std::setfill( '0' )
-                    << volume->getVoxel(x,y,z).sdfValue;
+                    << std::setprecision( 5 )
+                    << ((v <= 0) ? "#" : " ");
                 std::cout << " ";
             }
             std::cout << " ]\n";
