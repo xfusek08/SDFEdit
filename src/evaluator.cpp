@@ -4,11 +4,6 @@
 
 #include <RenderBase/logging.h>
 
-#include <glm/gtx/string_cast.hpp>
-
-#include <iostream>
-#include <iomanip>
-
 using namespace primitives;
 using namespace std;
 
@@ -26,7 +21,7 @@ glm::f32 distanceToEdit(const GeometryEdit& edit, const glm::vec3& coords, const
             return dr;
         }
         default:
-            return FLT_MAX;
+        return FLT_MAX;
     }
 }
 
@@ -34,20 +29,20 @@ Volume* buildVolumeForGeometry(const Geometry& geometry)
 {
     // We want to fit the volume cube to the center of geometry bounding box with some space around.
     glm::f32 minimalVolumeEdgeLength = geometry.getAABB().longestEdgeSize() + BOUNDING_OFFSET;
-
+    
     // Unit cube is divided into geometry.resolution^3 cubical voxels.
     glm::f32 voxelSize = 1.0F / geometry.getResolution();
     
     // nearest upper even number of voxel in one edge of volume
     glm::u32 voxelCount = glm::round(glm::ceil(minimalVolumeEdgeLength / voxelSize) / 2.0f) * 2.0;
-        
+    
     // primitives inside geometry will be displaced relative to the center of BB the insted of geometry origin.
     glm::vec3 primitiveCenterCorrection = -geometry.getAABB().center();
     
     // axis-paralel distance from center to the center OF edge voxel.
     // for example voxelCount = 4 and voxel size (v) is 1:
     //     then there is 2 voxels on each half and center of the last voxel is 1.5 from the center of the edge
-    glm::f32 maxVoxelCenterCoord = ((voxelCount - 1) * voxelSize) / 2.0f;
+    glm::f32 maxVoxelCenterCoord = ((voxelCount - 1) * voxelSize) * 0.5f;
     
     auto volume = new Volume(voxelSize, voxelCount);
     
@@ -76,21 +71,6 @@ Volume* buildVolumeForGeometry(const Geometry& geometry)
                 voxel.sdfValue = sdfValue;
                 volume->setVoxel(x,y,z, voxel);
             }
-        }
-    }
-    
-    for (uint32 z = 0; z < voxelCount; ++z) {
-        std::cout << "\n\n";
-        for (uint32 y = 0; y < voxelCount; ++y) {
-            std::cout << "[ ";
-            for (uint32 x = 0; x < voxelCount; ++x) {
-                auto v = volume->getVoxel(x,y,z).sdfValue;
-                std::cout
-                    << std::setprecision( 5 )
-                    << ((v <= 0) ? "#" : " ");
-                std::cout << " ";
-            }
-            std::cout << " ]\n";
         }
     }
     return volume;

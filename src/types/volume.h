@@ -29,8 +29,8 @@ class Volume {
             voxels(std::unique_ptr<VoxelData[]>(new VoxelData[voxelCount*voxelCount*voxelCount]))
             {}
             
-        inline glm::f32 getVoxelSize() { return voxelSize; }
-        inline glm::u32 getVoxelCount() { return voxelCount; }
+        inline glm::f32 getVoxelSize()  const { return voxelSize; }
+        inline glm::u32 getVoxelCount() const { return voxelCount; }
         
         inline VoxelData getVoxel(uint32 x, uint32 y, uint32 z) {
             RB_ASSERT(x < voxelCount);

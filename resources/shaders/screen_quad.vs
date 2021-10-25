@@ -4,17 +4,18 @@
  */
 #version 460 core
 
-smooth out vec2 fragCoord;
+smooth out vec3 pos;
+uniform mat4  mvp;
 
 void main() {
     switch(gl_VertexID) {
-        case 0: fragCoord = vec2(-1,-1); break; // BOTTOM LEFT
-        case 1: fragCoord = vec2(-1,1);  break; // TOP LEFT
-        case 2: fragCoord = vec2(1,1);   break; // TOP RIGHT
+        case 0: pos = vec3(-1,-1,0); break; // BOTTOM LEFT
+        case 1: pos = vec3(-1,1,0);  break; // TOP LEFT
+        case 2: pos = vec3(1,1,0);   break; // TOP RIGHT
 
-        case 3: fragCoord = vec2(1,1);   break; // TOP RIGHT
-        case 4: fragCoord = vec2(1,-1);  break; // BOTTOM RIGHT
-        case 5: fragCoord = vec2(-1,-1); break; // BOTTOM LEFT
+        case 3: pos = vec3(1,1,0);   break; // TOP RIGHT
+        case 4: pos = vec3(1,-1,0);  break; // BOTTOM RIGHT
+        case 5: pos = vec3(-1,-1,0); break; // BOTTOM LEFT
     }
-    gl_Position = vec4(fragCoord,1,1);
+    gl_Position = mvp * vec4(pos, 1);
 }

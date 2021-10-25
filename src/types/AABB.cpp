@@ -11,16 +11,16 @@ AABB AABB::transform(const Transform& tranform) const {
             { max.x, max.y, min.z, 1.0f },
             { max.x, min.y, max.z, 1.0f },
             { max.x, min.y, min.z, 1.0f },
-
+            
             // left side
             { min.x, max.y, max.z, 1.0f },
             { min.x, max.y, min.z, 1.0f },
             { min.x, min.y, max.z, 1.0f },
             { min.x, min.y, min.z, 1.0f },
         };
-
+        
         auto transformMatrix = glm::inverse(tranform.getTransform());
-
+        
         AABB bbRes = {};
         for (int i =0; i < 8; ++i) {
             auto transformed = transformMatrix * corners[i];
