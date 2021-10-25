@@ -15,9 +15,9 @@
  * Data stored per voxel (on CPU for now)
  */
 struct VoxelData {
-    glm::f32 sdfValue = FLT_MAX;
-    // glm::vec3 normal; // later on use normal and encode sdf value into its length
-    glm::vec3 color = rb::colors::white;
+    glm::vec4 data = glm::vec4(rb::colors::white, FLT_MAX);
+    inline void setSDFVal(glm::f32 value) {  data.a = value; }
+    inline glm::f32 getSDFVal() const { return data.a; }
 };
 
 // TODO extend to templated general data structure "Buffer3D<VoxelData>"
@@ -46,6 +46,8 @@ class Volume {
             voxels[z*voxelCount*voxelCount + y*voxelCount + x] = data;
         };
         
+        inline VoxelData* getDataPointer() { return voxels.get(); }
+    
     private:
         glm::f32 voxelSize = 0;  // This is a number describing a edge size of one voxel
         glm::u32 voxelCount = 0; // A discrete number of voxel in one dimension (N)  thus data will be allways NxNxN voxels

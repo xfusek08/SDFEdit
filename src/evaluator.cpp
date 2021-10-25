@@ -7,7 +7,7 @@
 using namespace primitives;
 using namespace std;
 
-#define BOUNDING_OFFSET 0.001f
+#define BOUNDING_OFFSET 0.5f
 
 glm::f32 distanceToEdit(const GeometryEdit& edit, const glm::vec3& coords, const glm::vec3& centerCorrection)
 {
@@ -60,7 +60,7 @@ Volume* buildVolumeForGeometry(const Geometry& geometry)
                 
                 VoxelData voxel = volume->getVoxel(x,y,z);
                 
-                glm::f32 sdfValue = voxel.sdfValue;
+                glm::f32 sdfValue = voxel.getSDFVal();
                 for (const auto& edit : geometry.getEdits()) {
                     sdfValue = glm::min(
                         distanceToEdit(edit, voxelPosition, primitiveCenterCorrection),
@@ -68,7 +68,7 @@ Volume* buildVolumeForGeometry(const Geometry& geometry)
                     );
                     // TODO: calculate normal and evaluate distance into its length
                 }
-                voxel.sdfValue = sdfValue;
+                voxel.setSDFVal(sdfValue);
                 volume->setVoxel(x,y,z, voxel);
             }
         }

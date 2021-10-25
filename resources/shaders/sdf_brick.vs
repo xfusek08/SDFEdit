@@ -1,7 +1,7 @@
 #version 460 core
 
-smooth out vec3 pos;
-smooth out vec3 col;
+smooth out vec3 fragPos;
+out vec3 fragNormal;
 
 uniform float voxelSize;
 uniform uint  voxelCount;
@@ -31,14 +31,33 @@ void main() {
     
     // orient face vertices by face
     switch(gl_VertexID / 6) {
-        case 0: pos = vec3(inFacePos.xy, FRONT); col = vec3(0,0,1); break; // front face
-        case 5: pos = vec3(-inFacePos.x, inFacePos.y, BACK); col = vec3(0,0,0.5); break; // back face
-        case 1: pos = vec3(inFacePos.x, UP, -inFacePos.y); col = vec3(0,1,0); break; // top face
-        case 2: pos = vec3(inFacePos.x, DOWN, inFacePos.y); col = vec3(0,0.5,0); break; // bottom face
-        case 3: pos = vec3(LEFT, inFacePos.y, inFacePos.x); col = vec3(0.5,0,0); break; // left face
-        case 4: pos = vec3(RIGHT, inFacePos.y, -inFacePos.x); col = vec3(1,0,0); break; // right face
-        default: break;
+        case 0: // front face
+            fragPos = vec3(inFacePos.xy, FRONT);
+            fragNormal = vec3(0,0,1);
+            break;
+        case 5: // back face
+            fragPos = vec3(-inFacePos.x, inFacePos.y, BACK);
+            fragNormal = vec3(0,0,-1);
+            break;
+        case 1: // top face
+            fragPos = vec3(inFacePos.x, UP, -inFacePos.y);
+            fragNormal = vec3(0,1,0);
+            break;
+        case 2: // bottom face
+            fragPos = vec3(inFacePos.x, DOWN, inFacePos.y);
+            fragNormal = vec3(0,-1,0);
+            break;
+        case 3: // left face
+            fragPos = vec3(LEFT, inFacePos.y, inFacePos.x);
+            fragNormal = vec3(-1,0,0);
+            break;
+        case 4: // right face
+            fragPos = vec3(RIGHT, inFacePos.y, -inFacePos.x);
+            fragNormal = vec3(1,0,0);
+            break;
+        default:
+            break;
     }
-    
-    gl_Position = mvp * vec4(pos, 1.0f);
+    // fragPos.z = 0;
+    gl_Position = mvp * vec4(fragPos, 1.0f);
 }
