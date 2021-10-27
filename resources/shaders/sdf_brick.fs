@@ -23,24 +23,31 @@ vec3  shift;
 float scale;
 float hitDistance;
 
-float distToVolume(vec3 pos)
+vec4 sampleVolume(vec3 pos)
 {
-    vec3 sampleCoords = pos * scale;
-    return texture(distanceVolume, sampleCoords).w;
+    return texture(distanceVolume, pos * scale);
 }
 
-vec3 getNormal(vec3 point) {
-    float d = distToVolume(point);
-    vec2 e = vec2(voxelSize * 0.1, 0);
-    vec3 n = d - vec3(
-        distToVolume(point - e.xyy),
-        distToVolume(point - e.yxy),
-        distToVolume(point - e.yyx)
-    );
-    return normalize(n);
+// Founds lenght of ray until it exits the rendered cube
+// This function was inspired by: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+// this is reduced version of the efficient slab test frem the article above
+float getDistanceToEndOfBrick(Ray ray) {
+    // prepare bb of current box
+    vec3 maxCorner = vec3(edgeLenght, edgeLenght, edgeLenght);
+    vec3 minCorner = vec3(0,0,0);
+    
+    vec3 inverseRayDir = 1.0 / ray.direction;
+    vec3 tminv0 = (minCorner - ray.position) * inverseRayDir;
+    vec3 tmaxv0 = (maxCorner - ray.position) * inverseRayDir;
+    
+    vec3 tmaxv = max(tminv0, tmaxv0);
+    
+    // return max component
+    return min(tmaxv.x, min(tmaxv.y, tmaxv.z));
 }
 
-vec4 getHitColor(vec3 pos) {
+// lighting
+vec4 getHitColor(vec3 pos, vec3 normal) {
     vec3 lightPos = vec3(5, 20, 10);
     vec3 lightColor = vec3(10, 10, 10);
     vec3 ambient = vec3(1, 1, 1) / 2;
@@ -48,7 +55,6 @@ vec4 getHitColor(vec3 pos) {
     float specularStrength = 0.5;
     
     // diffuse
-    vec3 normal = getNormal(pos);
     vec3 lightDir = normalize(lightPos - pos);
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
@@ -64,38 +70,42 @@ vec4 getHitColor(vec3 pos) {
 }
 
 void main() {
+    // some globals constant dependent on volume properties
+    // this might be precomputed uniforms to accelerate computation
     edgeLenght  = (float(voxelCount) * voxelSize);
-    shift       = vec3(edgeLenght, edgeLenght, edgeLenght) * 0.5;
+    shift       = vec3(edgeLenght, edgeLenght, edgeLenght)  * 0.5;
     scale       = 1.0 / edgeLenght;
-    hitDistance = voxelSize;
-    
-    Ray ray = Ray(
-        fragPos + shift,
-        normalize(fragPos - cameraPosition)
-    );
-    
-    // fColor = vec4(ray.position, 1);
-    // return;
+    hitDistance = voxelSize * 0.5;
     
     // ray march
-    int steps = 0;
-    float dist = 0;
-    fColor = vec4((fragPos + shift) * scale, 0.0);
+    Ray   ray           = Ray(fragPos + shift, normalize(fragPos - cameraPosition) );
+    int   steps         = 0;
+    float maxDistance   = getDistanceToEndOfBrick(ray);
+    float totalDistance = 0;
+    
     for (steps = 0; steps < MAX_STEPS; ++steps) {
-        dist = distToVolume(ray.position);
-        if (dist >= MAX_DISTANCE)  {
-            discard;
-            // fColor = vec4((fragPos + shift) * scale, 0.1);
-            break;
-        }
-        if (dist <= hitDistance) {
-            fColor = getHitColor(ray.position);
+        vec4  volumeSample = sampleVolume(ray.position);
+        float actSDFValue  = volumeSample.w;
+        
+        // if we are near enought to the surface -> sample its color
+        if (actSDFValue <= hitDistance) {
+            fColor = getHitColor(ray.position, volumeSample.xyz);
+            // fColor = vec4(volumeSample.xyz, 1);
             return;
         }
-        // if (dist <= 0.5) {
-            // fColor = fColor + vec4(dist / edgeLenght,dist / edgeLenght,dist / edgeLenght,0);
-        // }
-        ray.position = ray.position + dist * ray.direction;
+        
+        // increment distance by sampled sdf value
+        totalDistance += actSDFValue;
+        if (totalDistance >= maxDistance) {
+            // discard; // we stepped outside the cube.
+            break;
+        }
+        
+        // step the ray by sampled sdf value for next iteration
+        ray.position = ray.position + actSDFValue * ray.direction;
     }
-    discard;
+    
+    // discard;
+    float c = float(steps) / float(MAX_STEPS);
+    fColor = vec4(1, 0, 0, c);
 }

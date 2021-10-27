@@ -15,12 +15,16 @@
  * Data stored per voxel (on CPU for now)
  */
 struct VoxelData {
-    glm::vec4 data = glm::vec4(rb::colors::white, FLT_MAX);
+    glm::vec4 data = glm::vec4(0);
+    
+    inline void setNormal(glm::vec3 value) {  data.x = value.x; data.y = value.y; data.x = value.z; }
+    inline glm::vec3 getNormal() const { return glm::vec3(data); }
+    
     inline void setSDFVal(glm::f32 value) {  data.a = value; }
     inline glm::f32 getSDFVal() const { return data.a; }
 };
 
-// TODO extend to templated general data structure "Buffer3D<VoxelData>"
+// TODO this will be implemented in compute shader directly writing into a 3D texture
 class Volume {
     public:
         Volume(glm::f32 voxelSize, glm::u32 voxelCount) :
@@ -46,7 +50,7 @@ class Volume {
             voxels[z*voxelCount*voxelCount + y*voxelCount + x] = data;
         };
         
-        inline VoxelData* getDataPointer() { return voxels.get(); }
+        inline VoxelData* getRawDataPointer() { return voxels.get(); }
     
     private:
         glm::f32 voxelSize = 0;  // This is a number describing a edge size of one voxel

@@ -52,7 +52,7 @@ class Geometry {
         
         
         inline const std::vector<GeometryEdit>& getEdits() const { return edits; }
-        inline glm::f32 getResolution() const { return resolution; }
+        inline glm::u32 getResolution() const { return resolution; }
         inline AABB getAABB() const { return aabb; }
         
     private:
@@ -62,11 +62,10 @@ class Geometry {
         std::vector<GeometryEdit> edits = {};
         
         /**
-         * Resolution means voxel division factor => when resolution = 100, then geometry will voxelized into
-         * cube of NxNxN voxels, where one voxel will have size (1/100). The N will be dependent on actual
-         * size of voxelized geometry.
+         * Resolution means imply the number of voxels along one edge ot the volume cube.
+         * So its refering to the 'N' of the N x N x N volume.
          */
-        glm::f32 resolution;
+        glm::u32 resolution;
         
         /**
          * Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.

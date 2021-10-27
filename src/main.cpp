@@ -76,16 +76,19 @@ bool Application::init()
     // Prepare test geometry
     
     scene = new Scene();
-    scene->geometryPool = { Geometry(20) };
+    scene->geometryPool = { Geometry(8) };
     scene->modelPool = { { 0, Transform() } };
-    glm::vec3 min = glm::vec3{-2, -2, -2};
-    glm::vec3 max = glm::vec3{2, 2, 2};
-    for (int i = 0; i < 100; ++i) {
-        scene->geometryPool[0].addEdit(primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.001, 0.7)));
-    }
-        
-    volume = buildVolumeForGeometry(scene->geometryPool[0]);
+    scene->geometryPool[0].addEdit(primitives::Sphere::createEdit());
     
+    // glm::vec3 min = glm::vec3{-2, -2, -2};
+    // glm::vec3 max = glm::vec3{2, 2, 2};
+    // for (int i = 0; i < 100; ++i) {
+    //     scene->geometryPool[0].addEdit(primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.001, 0.7)));
+    // }
+        
+    volume = evaluator::buildVolumeForGeometry(scene->geometryPool[0]);
+    
+    // std::cout << "Volume(" << volume->getVoxelCount() << ", " << volume->getVoxelSize() << ")\n";
     // for (uint32 z = 0; z < volume->getVoxelCount(); ++z) {
     //     std::cout << "\n" << float32(z) / (volume->getVoxelSize() * volume->getVoxelCount()) << "\n";
     //     for (uint32 y = 0; y < volume->getVoxelCount(); ++y) {
@@ -101,19 +104,22 @@ bool Application::init()
     //     }
     // }
     
-    // create the volume texture
+    // Create the volume texture ...
+    //
+    // This and initiation of Volume instance in evaluator.cpp will be abstracted away to new "Volume" object
+    // which will prepare the texture image and dispatch the evaluator compute shader
     glCreateTextures(GL_TEXTURE_3D, 1, &volumeTextureId);
     glTextureParameteri(volumeTextureId, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTextureParameteri(volumeTextureId, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTextureParameteri(volumeTextureId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(volumeTextureId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(volumeTextureId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(volumeTextureId, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(volumeTextureId, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(volumeTextureId, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
     
-    float volumeBorder[] = { 1.0f, 1.0f, 0.0f, FLT_MAX };
+    float volumeBorder[] = { 1.0f, 1.0f, 0.0f, volume->getVoxelSize() * 0.5f };
     glTextureParameterfv(volumeTextureId, GL_TEXTURE_BORDER_COLOR, volumeBorder);
     glBindTextureUnit(1, volumeTextureId);
     glBindTexture(GL_TEXTURE_3D, volumeTextureId);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, volume->getVoxelCount(), volume->getVoxelCount(), volume->getVoxelCount(), 0, GL_RGBA, GL_FLOAT, volume->getDataPointer());
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, volume->getVoxelCount(), volume->getVoxelCount(), volume->getVoxelCount(), 0, GL_RGBA, GL_FLOAT, volume->getRawDataPointer());
     
     // load uniform variables to the program
     program->uniform("distanceVolume", volumeTextureId);
@@ -130,7 +136,7 @@ bool Application::init()
     glEnable(GL_CULL_FACE);
     glCreateVertexArrays(1, &vao);
     glBindVertexArray(vao);
-    glClearColor(0.1, 0.1, 0.2, 1);
+    glClearColor(0.2, 0.3, 0.7, 1);
     return true;
 }
 
