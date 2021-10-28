@@ -28,7 +28,7 @@ glm::f32 distanceToEdit(const GeometryEdit& edit, const glm::vec3& coords, const
     }
 }
 
-Volume* evaluator::buildVolumeForGeometry(const Geometry& geometry)
+unique_ptr<Volume> evaluator::buildVolumeForGeometry(const Geometry& geometry)
 {
     // Nearest upper even number of voxel in one edge of volume.
     glm::u32 voxelCount = glm::round(glm::f32(geometry.getResolution()) / 2.0f) * 2.0f;
@@ -47,7 +47,7 @@ Volume* evaluator::buildVolumeForGeometry(const Geometry& geometry)
     glm::f32 maxVoxelCenterCoord = ((voxelCount - 1) * voxelSize) * 0.5f;
     
     // Lets create the volume
-    auto volume = new Volume(voxelSize, voxelCount);
+    auto volume = make_unique<Volume>(voxelSize, voxelCount);
     
     // for each voxel (compute shader kernel)
     for (uint32 z = 0; z < voxelCount; ++z) {
@@ -90,5 +90,5 @@ Volume* evaluator::buildVolumeForGeometry(const Geometry& geometry)
             }
         }
     }
-    return volume;
+    return move(volume);
 }

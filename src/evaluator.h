@@ -5,5 +5,5 @@
 #include <types/scene.h>
 
 namespace evaluator {
-    Volume* buildVolumeForGeometry(const Geometry& geometry);
+    std::unique_ptr<Volume> buildVolumeForGeometry(const Geometry& geometry);
 }

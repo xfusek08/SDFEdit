@@ -24,7 +24,7 @@ struct VoxelData {
     inline glm::f32 getSDFVal() const { return data.a; }
 };
 
-// TODO this will be implemented in compute shader directly writing into a 3D texture
+// TODO: this will be implemented in compute shader directly writing into a 3D texture
 class Volume {
     public:
         Volume(glm::f32 voxelSize, glm::u32 voxelCount) :

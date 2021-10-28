@@ -76,9 +76,5 @@ class Geometry {
 struct Model {
     glm::u32  geometryId;
     Transform transform;
-};
-
-struct Scene {
-    std::vector<Geometry> geometryPool = {};
-    std::vector<Model>    modelPool    = {};
+    // TODO: additional model properties which might be used in shading
 };
