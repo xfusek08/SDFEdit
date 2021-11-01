@@ -22,12 +22,19 @@ bool Application::init()
     appState->cameraController = make_unique<OrbitCameraController>(cam, *state.eventDispatcher);
     
     // prepare test geometry
-    appState->geometryPool.addItems({ Geometry(70) });
+    appState->geometryPool.addItems({ Geometry(100) });
     appState->modelPool.addItems({ { 0, Transform() } });
+    // appState->geometryPool.getItem(0).addEdit(primitives::Sphere::createEdit());
+    // appState->geometryPool.getItem(0).addEdit(primitives::Sphere::createEdit(
+    //     2, Transform({1,2,3}), 1.5, {0.5,0.6,0.7}, 0.4
+    // ));
+    
     glm::vec3 min = glm::vec3{-2, -2, -2};
     glm::vec3 max = glm::vec3{2, 2, 2};
-    for (int i = 0; i < 10; ++i) {
-        appState->geometryPool.getItem(0).addEdit(primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.001, 0.7)));
+    for (int i = 0; i < 100; ++i) {
+        appState->geometryPool.getItem(0).addEdit(
+            primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.001, 0.7))
+        );
     }
     
     appState->geometryPool.evaluateGeometries(appState->geometryEvaluator);

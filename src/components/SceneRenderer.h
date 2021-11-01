@@ -18,4 +18,7 @@ struct SceneRenderer {
     
     private:
         rb::gl::Program program;
+        
+        //NOTE: temp implementation
+        std::vector<EvaluatedGeometry> toRenderGeometry;
 };

@@ -17,7 +17,14 @@ namespace primitives {
             glm::vec3 color     = rb::colors::white,
             glm::f32  blending  = 0.0f
         ) {
-            return { PrimitiveType::ptSphere, operation, transform, color, blending, { radius, 0, 0, 0} };
+            GeometryEdit res;
+            res.primitiveType = PrimitiveType::ptSphere;
+            res.operation     = operation;
+            res.blending      = glm::u8(glm::clamp(blending * 255.0f, 0.0f, 255.0f));
+            res.color         = glm::vec4(color, 1);
+            res.transform     = transform;
+            res.primitiveData = { radius, 0, 0, 0 };
+            return res;
         }
     };
 }

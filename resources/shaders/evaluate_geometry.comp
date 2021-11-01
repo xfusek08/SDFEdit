@@ -1,0 +1,93 @@
+#version 460 core
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+
+// Constant definitions
+// --------------------
+
+#define MAX_DISTANCE     1000000.0
+#define PRIMITIVE_SPHERE 0
+
+
+// Uniform input data
+// ------------------
+
+uniform vec3  centerCorrection;
+uniform float voxelSize;
+uniform uint  voxelCount;
+uniform uint  editCount;
+
+
+// Buffer Input Data
+// -----------------
+
+struct Edit {
+    uint type;
+    uint op;
+    uint blending;
+    uint padding1;
+    vec3 position;
+    float padding2;
+    vec4 data;
+};
+
+layout(std430, binding = 0) buffer Input { Edit edits[]; };
+
+
+// Buffer output data
+// ------------------
+
+layout(rgba32f, binding = 0) uniform image3D outVolumeTextures;
+
+
+// Functions
+// -----------------
+
+float distanceToEdit(Edit edit, vec3 position) {
+    switch (edit.type) {
+        case PRIMITIVE_SPHERE: {
+            vec3  c = edit.position + centerCorrection;
+            float d = distance(c, position);
+            float r = edit.data.x;
+            float dr = d - r;
+            return dr;
+        }
+        default:
+            return MAX_DISTANCE;
+    }
+    return MAX_DISTANCE;
+}
+
+// MAIN kernel
+// -----------
+
+void main() {
+    
+    ivec3 voxelCoord = ivec3(gl_GlobalInvocationID.xyz);
+    
+    float maxVoxelCenterCoord = ((voxelCount - 1) * voxelSize) * 0.5f; // Axis-paralel distance from center to the center OF edge voxel.
+    vec3 voxelCenterPosition = (gl_GlobalInvocationID.xyz * voxelSize) - maxVoxelCenterCoord;
+        
+    // evaluate SDF value by iterating over all edits
+    float sdfValue = MAX_DISTANCE;
+    Edit closestEdit = edits[0];
+    for (int i = 0; i < editCount; ++i) {
+        Edit edit = edits[i];
+        float distanceToPrimitive = distanceToEdit(edit, voxelCenterPosition);
+        if (distanceToPrimitive < sdfValue) {
+            sdfValue = distanceToPrimitive;
+            closestEdit = edit;
+        }
+    }
+    
+    // calculate normal
+    vec2 e = vec2(voxelSize * 0.1, 0);
+    vec3 normal = normalize(sdfValue - vec3(
+        distanceToEdit(closestEdit, voxelCenterPosition - e.xyy),
+        distanceToEdit(closestEdit, voxelCenterPosition - e.yxy),
+        distanceToEdit(closestEdit, voxelCenterPosition - e.yyx)
+    ));
+    
+    // output to a specific pixel in the image
+    imageStore(outVolumeTextures, voxelCoord, vec4(normal, sdfValue));
+}

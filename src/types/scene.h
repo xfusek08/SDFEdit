@@ -34,12 +34,14 @@ enum GeometryOperation {
 };
 
 struct GeometryEdit {
-    glm::u8   primitiveType; // 255 primitives is still way to much
-    glm::u8   operation;     // 255 operations is still way to much
-    Transform transform;
-    glm::vec3 color;
-    glm::f32  blending;
-    glm::vec4 primitiveData;
+    glm::u32 primitiveType;
+    glm::u32 operation;
+    glm::u32 blending;
+    Transform transform;     // 7x float TODO: maybe store transform as 4x4 matrix?
+    glm::vec4 color;         // 3x float - color value TODO: maybe pack it to 3 bytes (255 ber chanel)
+    glm::vec4 primitiveData; // 4x float TODO: maybe store as union depending on primitive type, I dont know how, much data will more complex shapes have to hold.
+    
+    // TODO: first 3 properties could be packed into a single integer
 };
 
 class Geometry {
