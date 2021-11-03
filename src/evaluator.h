@@ -1,9 +1,16 @@
 
 #pragma once
 
-#include <types/volume.h>
-#include <types/scene.h>
+#include <types/AppState.h>
 
-namespace evaluator {
-    std::unique_ptr<Volume> buildVolumeForGeometry(const Geometry& geometry);
-}
+#include <RenderBase/gl/Program.h>
+
+class AppStateEvaluator
+{
+    public:
+        AppStateEvaluator();
+        std::unique_ptr<AppState> evaluateState(std::unique_ptr<AppState> oldState);
+        EvaluatedGeometry evaluateGeometry(const Geometry& geometry);
+    private:
+        rb::gl::Program program;
+};

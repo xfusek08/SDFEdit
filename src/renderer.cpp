@@ -1,10 +1,10 @@
 
-#include <components/SceneRenderer.h>
+#include <renderer.h>
 
 using namespace std;
 using namespace rb;
 
-SceneRenderer::SceneRenderer() :
+AppStateRenderer::AppStateRenderer() :
     program({
         new gl::Shader(GL_VERTEX_SHADER, RESOURCE_SHADERS_SDF_BRICK_VS),
         new gl::Shader(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_SDF_BRICK_FS)
@@ -13,26 +13,8 @@ SceneRenderer::SceneRenderer() :
   
 };
 
-void SceneRenderer::prepare(const ModelPool& modelPool, const GeometryPool& geometrypool, Camera& camera)
+void AppStateRenderer::prepare()
 {
-    program.use();
-    
-    if (camera.dirtyFlag) {
-        program.loadStandardCamera(camera);
-        camera.dirtyFlag = false;
-    }
-    
-    
-    
-    // TODO: prepare buffers -> buffers should have valid data loaded already
-    // TODO: prepare batch rendering for brick pool given by geometry pool
-    
-    
-    
-    // NOTE: temp implementation with single flat 3D texture per geometry
-    // NOTE: very sub-optimal temp solution
-    toRenderGeometry = geometrypool.getEvaluatedGeometries();
-    
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_CULL_FACE);
@@ -43,10 +25,25 @@ void SceneRenderer::prepare(const ModelPool& modelPool, const GeometryPool& geom
     glBindVertexArray(vao);
 }
 
-void SceneRenderer::render()
+void AppStateRenderer::renderState(const AppState& appState)
 {
+    program.use();
+    
+    // camera update
+    auto cam = appState.cameraController->getCamera();
+    if (cam.dirtyFlag) {
+        program.loadStandardCamera(cam);
+        cam.dirtyFlag = false;
+    }
+    
+    
     glClear(GL_COLOR_BUFFER_BIT);
-    for (const auto& geometry : toRenderGeometry) {
+    
+    // TODO: initiate batch rendering of models stored in buffer which will be evaluated before calling this method
+    // and its id wii be stored in given appState
+    
+    // NOTE: for now only geometries are rendered
+    for (const auto& geometry : appState.geometryPool->evaluatedGeometries) {
         
         glBindImageTexture(
             1,                      // Texture unit
@@ -59,7 +56,7 @@ void SceneRenderer::render()
         );
         
         // we have only one geometry to render
-        program.uniform("distanceVolume", geometry.volumeTextrue);
+        // program.uniform("distanceVolume", geometry.volumeTextrue);
         program.uniform("voxelSize",      geometry.voxelSize);
         program.uniform("voxelCount",     geometry.voxelCount);
         glDrawArrays(GL_TRIANGLES, 0, 6*6); // cube has 6 sides and each side has 6 verticies

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <types/scene.h>
+#include <RenderBase/defines.h>
 
-#include <components/GeometryEvaluator.h>
+#include <vector>
 
 enum class ItemState {
     created, clean, dirty, deleted
@@ -32,10 +32,13 @@ struct ItemPoolBehavior {
         return items[index];
     }
     
-    inline const T& readItem(uint32 index) const
-    {
-        return items[index];
-    }
+    inline const T& readItem(uint32 index) const { return items[index]; }
+    
+    inline const std::vector<T>& getItems() const { return items; }
+    
+    inline ItemState getItemState(uint32 index) const { return itemsStates[index]; }
+    
+    inline void cleanItem(uint32 index) { itemsStates[index] = ItemState::clean; }
     
     protected:
         std::vector<T> items;

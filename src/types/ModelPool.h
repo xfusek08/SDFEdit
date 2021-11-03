@@ -2,7 +2,7 @@
 
 #include <types/scene.h>
 
-#include <components/ElementPoolBehavior.h>
+#include <types/ElementPoolBehavior.h>
 
 struct ModelPool : public ItemPoolBehavior<Model> {
     

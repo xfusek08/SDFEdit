@@ -14,3 +14,9 @@ void Geometry::addEdits(const std::vector<GeometryEdit>& edits)
         addEdit(edit);
     }
 }
+
+
+void Geometry::clearEdits()
+{
+    edits.clear();
+}

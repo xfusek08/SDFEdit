@@ -1,94 +1,213 @@
-#ifdef DEBUG
-    // #define NO_LOG // uncomment if debug logging should be ignored for this file
-    #include <RenderBase/logging.h>
-    #include <glm/gtx/string_cast.hpp>
-#endif
 
 #include <evaluator.h>
-#include <types/primitives.h>
 
-using namespace primitives;
+#include <iomanip>
+#include <iostream>
+
 using namespace std;
+using namespace rb;
 
 #define BOUNDING_OFFSET 0.0f
 
-glm::f32 distanceToEdit(const GeometryEdit& edit, const glm::vec3& coords, const glm::vec3& centerCorrection)
+AppStateEvaluator::AppStateEvaluator() :
+    program({ new gl::Shader(GL_COMPUTE_SHADER, RESOURCE_SHADERS_EVALUATE_GEOMETRY_COMP) })
 {
-    switch (edit.primitiveType)
-    {
-        case PrimitiveType::ptSphere: {
-            auto c = Sphere::center(edit) + centerCorrection;
-            auto d = glm::distance(c, coords);
-            auto r = Sphere::radius(edit);
-            auto dr = d - r;
-            return dr;
-        }
-        default:
-        return FLT_MAX;
-    }
+    
 }
 
-unique_ptr<Volume> evaluator::buildVolumeForGeometry(const Geometry& geometry)
+std::unique_ptr<AppState> AppStateEvaluator::evaluateState(std::unique_ptr<AppState> oldState)
 {
-    // Nearest upper even number of voxel in one edge of volume.
-    glm::u32 voxelCount = glm::round(glm::f32(geometry.getResolution()) / 2.0f) * 2.0f;
+    // Evaluate Geometry pool
+    // ----------------------
     
-    RB_DEBUG("geometry.getAABB().longestEdgeSize(): " << geometry.getAABB().longestEdgeSize());
+    // TODO: delete deleted geometries
+    // TODO: create new geometries
+    // TODO: update changed geometries
+    
+    
+    
+    // NOTE: tmp implementation: only first geometry is evaluated now
+    if (oldState->geometryPool->getItemState(0) != ItemState::clean) {
+        const auto& items = oldState->geometryPool->getItems();
+        auto& evaluatedGeometries = oldState->geometryPool->evaluatedGeometries;
+        evaluatedGeometries.resize(1);
+        evaluatedGeometries[0] = evaluateGeometry(items[0]);
+        oldState->geometryPool->cleanItem(0);
+    }
+    
+    
+    return move(oldState);
+}
+
+EvaluatedGeometry AppStateEvaluator::evaluateGeometry(const Geometry& geometry)
+{
+    // 1.  Compute basic metadata about bounding voxelized volume (shader uniforms)
+    // -----------------------------------------------------------------------------
+    
+    // Nearest upper number of voxels divisible by 8 in one edge of volume.
+    glm::u32 voxelCount = glm::round(glm::f32(geometry.getResolution()) / 8.0f) * 8.0f;
     
     // Unit cube around the BB is divided into geometry.resolution^3 cubical voxels.
     glm::f32 voxelSize = (geometry.getAABB().longestEdgeSize() + BOUNDING_OFFSET) / glm::f32(voxelCount - 2);
+    // glm::f32 voxelSize = geometry.getAABB().longestEdgeSize() / glm::f32(voxelCount);
     
     // Primitives inside geometry will be displaced relative to the center of BB the insted of geometry origin.
     glm::vec3 primitiveCenterCorrection = -geometry.getAABB().center();
     
-    // Axis-paralel distance from center to the center OF edge voxel.
-    // For example voxelCount = 4 and voxelSize is 1 (4x4x4 cube):
-    //     There are 2 voxels in each direction from the origin and center of the last voxel is 1.5 away in the direction
-    glm::f32 maxVoxelCenterCoord = ((voxelCount - 1) * voxelSize) * 0.5f;
     
-    // Lets create the volume
-    auto volume = make_unique<Volume>(voxelSize, voxelCount);
+    // 2. Prepare shader outputs
+    // --------------------------
+    // NOTE: Now it is only one simple 3D texture containing whole volume of one geometry.
+    // TODO: In the future compute shader output this will existing sparse 3d texture for individual 8x8x8 bricks
+    // and a new buffer to store evaluated node octree.
+        
+    // glEnable(GL_TEXTURE_3D);
+    GLuint volumeTexture;
+    float volumeBorder[] = { 0.0f, 0.0f, 0.0f, voxelSize * 0.5f };
+    glCreateTextures(GL_TEXTURE_3D, 1, &volumeTexture);
+    glTextureParameteri(volumeTexture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTextureParameteri(volumeTexture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTextureParameteri(volumeTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(volumeTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTextureParameteri(volumeTexture, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+    glTextureParameterfv(volumeTexture, GL_TEXTURE_BORDER_COLOR, volumeBorder);
     
-    // for each voxel (compute shader kernel)
-    for (uint32 z = 0; z < voxelCount; ++z) {
-        for (uint32 y = 0; y < voxelCount; ++y) {
-            for (uint32 x = 0; x < voxelCount; ++x) {
-                
-                // compute position of center of current voxel relative to the origin
-                glm::vec3 voxelPosition = {
-                    -maxVoxelCenterCoord + x * voxelSize,
-                    -maxVoxelCenterCoord + y * voxelSize,
-                    -maxVoxelCenterCoord + z * voxelSize,
-                };
-                
-                // find sdf value and closest primitive
-                glm::f32 sdfValue      = FLT_MAX;
-                uint32   closestEditId = 0;
-                uint32   actEditId     = 0;
-                for (const GeometryEdit& edit : geometry.getEdits()) {
-                    glm::f32 primitiveDist = distanceToEdit(edit, voxelPosition, primitiveCenterCorrection);
-                    if (primitiveDist < sdfValue) {
-                        sdfValue = primitiveDist;
-                        closestEditId = actEditId;
-                    }
-                    ++actEditId;
-                }
-                
-                // compute normal
-                glm::f32 e = voxelSize * 0.1f;
-                glm::vec3 normal = glm::normalize(sdfValue - glm::vec3(
-                    distanceToEdit(geometry.getEdits()[closestEditId], voxelPosition - glm::vec3(e, 0, 0), primitiveCenterCorrection),
-                    distanceToEdit(geometry.getEdits()[closestEditId], voxelPosition - glm::vec3(0, e, 0), primitiveCenterCorrection),
-                    distanceToEdit(geometry.getEdits()[closestEditId], voxelPosition - glm::vec3(0, 0, e), primitiveCenterCorrection)
-                ));
-
-                // set voxel
-                VoxelData voxel = volume->getVoxel(x,y,z);
-                voxel.setNormal(normal);
-                voxel.setSDFVal(sdfValue);
-                volume->setVoxel(x, y, z, voxel);
-            }
-        }
+    // prepare image buffer size
+    glBindTexture(GL_TEXTURE_3D, volumeTexture);
+    glTexImage3D(
+        GL_TEXTURE_3D,
+        0,
+        GL_RGBA32F,
+        voxelCount,
+        voxelCount,
+        voxelCount,
+        0,
+        GL_RGBA,
+        GL_FLOAT,
+        nullptr
+    );
+    
+    // Prepare texture to be written to:
+    glBindImageTexture(
+        0,             // Texture unit
+        volumeTexture, // Texture name
+        0,             // Level of Mip Map
+        GL_TRUE,       // Layered (false) -> this needs to be true because we have 3d texture
+        0,             // Specify layer if Layered is GL_FALSE
+        GL_READ_WRITE, // access
+        GL_RGBA32F     // format
+    );
+    
+    
+    
+    // 3. Prepare shader inputs
+    // -------------------------
+    // This will create shader storage buffer object to which list of geometry edits will be uploaded.
+    // TODO: abstract buffer to object instance when I will know what is needed to maintain it
+    // TODO: What about padding the struct?
+        
+    // Edits geometry buffer
+    
+    struct Edit {
+        uint32    type;
+        uint32    op;
+        uint32    blending;
+        uint32    _padding1;
+        glm::vec3 pos;
+        float     _padding2;
+        glm::vec4 data;
+    };
+    
+    std::vector<Edit> edits;
+    for (auto e : geometry.getEdits()) {
+        edits.push_back({
+            e.primitiveType,
+            e.operation,
+            e.blending,
+            0,
+            e.transform.position,
+            0,
+            e.primitiveData
+        });
     }
-    return move(volume);
+    
+    GLuint editListBuffer;
+    glCreateBuffers(1, &editListBuffer);
+    glNamedBufferData(editListBuffer, sizeof(Edit) * edits.size(), edits.data(), GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, editListBuffer);
+    
+    // Uniforms
+    program.uniform("centerCorrection", -geometry.getAABB().center());
+    program.uniform("voxelSize", voxelSize);
+    program.uniform("voxelCount", voxelCount);
+    program.uniform("editCount", uint32(geometry.getEdits().size()));
+    
+    
+    
+    // 4 Prepare compute shader work group size
+    // -----------------------------------------
+    // TODO: computing possible workgroup sizes should be part ouf initiation process
+    
+    // // Zjištění možného množství pracovních skupin na GPU:
+    // GLint workGroupCounts[3];
+    // glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &workGroupCounts[0]);
+    // glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &workGroupCounts[1]);
+    // glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &workGroupCounts[2]);
+    // RB_DEBUG("Possible work groups: (" << workGroupCounts[0] << ", " << workGroupCounts[1] << ", " << workGroupCounts[2]<< ")");
+    
+    // // Zjištění maximální velikosti jedné pracovní skupiny na GPU:
+    // GLint workGroupSize[3];
+    // glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &workGroupSize[0]);
+    // glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &workGroupSize[1]);
+    // glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &workGroupSize[2]);
+    // RB_DEBUG("Work group size: (" << workGroupSize[0] << ", " << workGroupSize[1] << ", " << workGroupSize[2]<< ")");
+
+    // GLint maximumLocalWorkGroupSize;
+    // glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &maximumLocalWorkGroupSize);
+    // RB_DEBUG("Maximum local work group invocations: " << maximumLocalWorkGroupSize);
+    
+    // Dispatch shader
+    program.use();
+    glDispatchCompute(voxelCount / 8, voxelCount / 8, voxelCount / 8);
+    
+    // Wait to shared be done with rendering
+    // TODO: this maybe should be as part of render preparations
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    // glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    // glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
+    
+    
+    // // NOTE: temp checking what was generated into a texture
+    // auto pixels = std::vector<float>(voxelCount*voxelCount*voxelCount*4, 5);
+    // glGetTextureImage(
+    //     volumeTexture,
+    //     0,
+    //     GL_RGBA,
+    //     GL_FLOAT,
+    //     pixels.size() * sizeof(float),
+    //     pixels.data()
+    // );
+    
+    // for (uint32 z = 0; z < voxelCount; ++z) {
+    //     std::cout << "\n";
+    //     for (uint32 y = 0; y < voxelCount; ++y) {
+    //         std::cout << "[ ";
+    //         for (uint32 x = 0; x < voxelCount; ++x) {
+    //             uint32 index = 4*(z * voxelCount*voxelCount + y*voxelCount + x) + 3;
+    //             auto v = pixels[index];
+    //             std::cout
+    //                 << std::setprecision(5)
+    //                 << ((v <= 0) ? "#" : " ")
+    //                 << " ";
+                    
+    //         }
+    //         std::cout << " ]\n";
+    //     }
+    // }
+    
+    return {
+        voxelCount,
+        voxelSize,
+        volumeTexture
+    };
 }

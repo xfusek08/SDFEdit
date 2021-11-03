@@ -51,7 +51,7 @@ class Geometry {
         
         void addEdit(GeometryEdit edit);
         void addEdits(const std::vector<GeometryEdit>& edits);
-        
+        void clearEdits();
         
         inline const std::vector<GeometryEdit>& getEdits() const { return edits; }
         inline glm::u32 getResolution() const { return resolution; }
