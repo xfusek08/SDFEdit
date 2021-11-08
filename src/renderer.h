@@ -9,6 +9,7 @@ class AppStateRenderer
 {
     public:
         AppStateRenderer();
+        ~AppStateRenderer();
         
         void prepare();
         void renderState(const AppState& appState);

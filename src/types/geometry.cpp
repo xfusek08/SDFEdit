@@ -1,5 +1,5 @@
 
-#include <types/scene.h>
+#include <types/geometry.h>
 #include <types/primitives.h>
 
 void Geometry::addEdit(GeometryEdit edit)

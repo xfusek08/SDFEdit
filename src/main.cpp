@@ -85,9 +85,9 @@ void Application::draw()
 
 bool Application::finalize()
 {
-    appState.release();
-    updater.release();
-    evaluator.release();
-    renderer.release();
+    appState.reset();
+    updater.reset();
+    evaluator.reset();
+    renderer.reset();
     return true;
 }

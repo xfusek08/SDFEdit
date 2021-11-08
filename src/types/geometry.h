@@ -16,6 +16,8 @@
 
 using PrimitiveData = glm::vec4;
 
+struct EvaluatedGeometry; // fwd declaration of what ever evaluator implements
+
 enum PrimitiveType {
     ptSphere    = 0,
     ptCapsule   = 1,
@@ -44,19 +46,36 @@ struct GeometryEdit {
     // TODO: first 3 properties could be packed into a single integer
 };
 
-class Geometry {
-    public:
-        Geometry(glm::f32 resolution = DEFAULT_GEOMETRY_RESOLUTION) :
-            resolution(resolution) {}
-        
-        void addEdit(GeometryEdit edit);
-        void addEdits(const std::vector<GeometryEdit>& edits);
-        void clearEdits();
-        
-        inline const std::vector<GeometryEdit>& getEdits() const { return edits; }
-        inline glm::u32 getResolution() const { return resolution; }
-        inline AABB getAABB() const { return aabb; }
-        
+struct Geometry {
+    // public properties which can be managed externally and are tied to rendering and evaluation processes
+    // -----------------------------------------------------------------------------------------------------
+    
+    /**
+     * Resolution means imply the number of voxels along one edge ot the volume cube.
+     * So its refering to the 'N' of the N x N x N volume.
+     */
+    glm::u32 resolution;
+    
+    /**
+     * Pointer to evaluated geometry.
+     * This struct only needs to manage the life time of the evaluated geometry but
+     * does not need to know about its implementation, that is not its concern.
+     */
+    std::shared_ptr<EvaluatedGeometry> evaluatedGeometry;
+
+    // Methods for encapsulated access to data
+    // ---------------------------------------
+    
+    Geometry(glm::f32 resolution = DEFAULT_GEOMETRY_RESOLUTION) : resolution(resolution) {}
+    
+    void addEdit(GeometryEdit edit);
+    void addEdits(const std::vector<GeometryEdit>& edits);
+    void clearEdits();
+    
+    inline const std::vector<GeometryEdit>& getEdits() const { return edits; }
+    inline glm::u32 getResolution() const { return resolution; }
+    inline AABB getAABB() const { return aabb; }
+    
     private:
         /**
          * List of edits creating this geometry
@@ -64,19 +83,7 @@ class Geometry {
         std::vector<GeometryEdit> edits = {};
         
         /**
-         * Resolution means imply the number of voxels along one edge ot the volume cube.
-         * So its refering to the 'N' of the N x N x N volume.
-         */
-        glm::u32 resolution;
-        
-        /**
          * Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.
          */
         AABB aabb = AABB();
-};
-
-struct Model {
-    glm::u32  geometryId;
-    Transform transform;
-    // TODO: additional model properties which might be used in shading
 };

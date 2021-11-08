@@ -1,17 +1,24 @@
 
 #include <renderer.h>
+#include <evaluator.h>
+
+#include <RenderBase/logging.h>
 
 using namespace std;
 using namespace rb;
 
 AppStateRenderer::AppStateRenderer() :
-    program({
-        new gl::Shader(GL_VERTEX_SHADER, RESOURCE_SHADERS_SDF_BRICK_VS),
-        new gl::Shader(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_SDF_BRICK_FS)
-    })
+    program(
+        make_shared<gl::Shader>(GL_VERTEX_SHADER, RESOURCE_SHADERS_SDF_BRICK_VS),
+        make_shared<gl::Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_SDF_BRICK_FS)
+    )
 {
   
 };
+
+AppStateRenderer::~AppStateRenderer()
+{
+}
 
 void AppStateRenderer::prepare()
 {
@@ -43,11 +50,12 @@ void AppStateRenderer::renderState(const AppState& appState)
     // and its id wii be stored in given appState
     
     // NOTE: for now only geometries are rendered
-    for (const auto& geometry : appState.geometryPool->evaluatedGeometries) {
+    for (const auto& geometry : appState.geometryPool->getItems()) {
+        const auto& evaluatedGeometry = *geometry.evaluatedGeometry;
         
         glBindImageTexture(
             1,                      // Texture unit
-            geometry.volumeTextrue, // Texture name
+            evaluatedGeometry.volumeTexture->getGlID(), // Texture name
             0,                      // Level of Mip Map
             GL_FALSE,               // Layered (false)
             0,                      // Specify layer if Layered is GL_FALSE
@@ -57,8 +65,8 @@ void AppStateRenderer::renderState(const AppState& appState)
         
         // we have only one geometry to render
         // program.uniform("distanceVolume", geometry.volumeTextrue);
-        program.uniform("voxelSize",      geometry.voxelSize);
-        program.uniform("voxelCount",     geometry.voxelCount);
+        program.uniform("voxelSize",  evaluatedGeometry.voxelSize);
+        program.uniform("voxelCount", evaluatedGeometry.voxelCount);
         glDrawArrays(GL_TRIANGLES, 0, 6*6); // cube has 6 sides and each side has 6 verticies
     }
 }

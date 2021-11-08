@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <types/scene.h>
+#include <types/geometry.h>
 
 // specific operation for particular primitive types
 namespace primitives {
