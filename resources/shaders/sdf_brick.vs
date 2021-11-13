@@ -5,7 +5,7 @@ out vec3 fragNormal;
 
 uniform float voxelSize;
 uniform uint  voxelCount;
-uniform mat4  mvp;
+uniform mat4  viewProjection;
 
 void main() {
     float halfEdgeLen = (float(voxelCount) * voxelSize) * 0.5;
@@ -59,5 +59,5 @@ void main() {
             break;
     }
     // fragPos.z = 0;
-    gl_Position = mvp * vec4(fragPos, 1.0f);
+    gl_Position = viewProjection * vec4(fragPos, 1.0f);
 }

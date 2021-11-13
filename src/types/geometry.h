@@ -16,8 +16,6 @@
 
 using PrimitiveData = glm::vec4;
 
-struct EvaluatedGeometry; // fwd declaration of what ever evaluator implements
-
 enum PrimitiveType {
     ptSphere    = 0,
     ptCapsule   = 1,
@@ -47,22 +45,12 @@ struct GeometryEdit {
 };
 
 struct Geometry {
-    // public properties which can be managed externally and are tied to rendering and evaluation processes
-    // -----------------------------------------------------------------------------------------------------
-    
     /**
      * Resolution means imply the number of voxels along one edge ot the volume cube.
      * So its refering to the 'N' of the N x N x N volume.
      */
     glm::u32 resolution;
     
-    /**
-     * Pointer to evaluated geometry.
-     * This struct only needs to manage the life time of the evaluated geometry but
-     * does not need to know about its implementation, that is not its concern.
-     */
-    std::shared_ptr<EvaluatedGeometry> evaluatedGeometry;
-
     // Methods for encapsulated access to data
     // ---------------------------------------
     

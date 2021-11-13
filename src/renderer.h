@@ -2,18 +2,26 @@
 #pragma once
 
 #include <types/AppState.h>
+#include <visualization/VisualizationTechnique.h>
 
 #include <RenderBase/gl/Program.h>
 
-class AppStateRenderer
+#include <vector>
+#include <memory>
+
+/**
+ * This is container and dispatcher for running for various visualization techniques.
+ */
+class Renderer
 {
     public:
-        AppStateRenderer();
-        ~AppStateRenderer();
         
-        void prepare();
-        void renderState(const AppState& appState);
+        using VTArray = std::vector<std::shared_ptr<VisualizationTechnique>>;
+        
+        Renderer(VTArray vts);
+        
+        void render(const AppState& appState);
         
     private:
-        rb::gl::Program program;
+        VTArray vts;
 };

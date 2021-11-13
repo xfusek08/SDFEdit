@@ -79,7 +79,7 @@ void main() {
             closestEdit = edit;
         }
     }
-    
+            
     // calculate normal
     vec2 e = vec2(voxelSize * 0.1, 0);
     vec3 normal = normalize(sdfValue - vec3(

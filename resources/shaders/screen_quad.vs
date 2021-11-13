@@ -5,7 +5,7 @@
 #version 460 core
 
 smooth out vec3 pos;
-uniform mat4  mvp;
+uniform mat4  viewProjection;
 
 void main() {
     switch(gl_VertexID) {
@@ -17,5 +17,5 @@ void main() {
         case 4: pos = vec3(1,-1,0);  break; // BOTTOM RIGHT
         case 5: pos = vec3(-1,-1,0); break; // BOTTOM LEFT
     }
-    gl_Position = mvp * vec4(pos, 1);
+    gl_Position = viewProjection * vec4(pos, 1);
 }
