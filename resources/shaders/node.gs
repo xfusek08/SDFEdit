@@ -3,6 +3,9 @@
 layout (points) in;
 layout (line_strip, max_vertices = 16) out;
 
+in vec4 color[];
+out vec4 vcolor;
+
 // Half edge lenght of level 0 cube
 #define D_0 0.5
 
@@ -29,10 +32,12 @@ uniform mat4 viewProjection;
 void main() {
     vec3 position = gl_in[0].gl_Position.xyz;
     float d       = gl_in[0].gl_Position.w;
-    
+    vcolor        = color[0];
     
     // FIRST PRIMITIVE
-    #define EMIT_LINE_VERTEX(shift) gl_Position = viewProjection * vec4(position + shift, 1); EmitVertex()
+    #define EMIT_LINE_VERTEX(shift) \
+        gl_Position = viewProjection * vec4(position + shift, 1); \
+        EmitVertex()
     
     EMIT_LINE_VERTEX( FTL(d) );
     EMIT_LINE_VERTEX( FTR(d) );

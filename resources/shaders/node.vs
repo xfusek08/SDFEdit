@@ -1,11 +1,15 @@
 #version 460 core
 
 layout (location = 0) in vec4 brick;
-#define D_0 0.5
+
+out vec4 color;
 
 uniform mat4 mvp;
 
 void main()
 {
-    gl_Position = vec4(brick.xyz, D_0 / (brick.w + 1));
+    gl_Position = brick;
+    // color = vec4(vec3(float(gl_VertexID) / 10), 1);
+    color = vec4(clamp(brick.xyz * 2, 0.5, 1), 1);
+    // color = vec4(1, 1, 1, 1);
 }

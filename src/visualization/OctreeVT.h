@@ -22,7 +22,13 @@ class OctreeVT : public VisualizationTechnique
 
     private:
         rb::gl::Program program;
+        
+        uint32 nodeCount = 0;
+        rb::gl::Program octreeProgram;
     
         std::unique_ptr<rb::gl::Buffer> vertexBuffer;
         std::unique_ptr<rb::gl::VertexArray> vertexArray;
+        
+        std::unique_ptr<rb::gl::Buffer> nodeBuffer;
+        std::unique_ptr<rb::gl::Buffer> counterBuffer;
 };
