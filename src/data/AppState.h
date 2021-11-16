@@ -1,7 +1,7 @@
 #pragma once
 
-#include <types/GeometryPool.h>
-#include <types/ModelPool.h>
+#include <data/geometry.h>
+#include <data/model.h>
 
 #include <RenderBase/tools/camera.h>
 

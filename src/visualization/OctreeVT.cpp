@@ -175,8 +175,8 @@ OctreeVT::OctreeVT() :
     for (int i = 0; i < maxSubdivisions; ++i) {
         flagNodes();
      
-        // printLevel("Current Level After Flagging", currentLevel);
-        // printNodeBuffer("After flagging");
+        printLevel("Current Level After Flagging", currentLevel);
+        printNodeBuffer("After flagging");
      
         currentLevel = subdivideLevel(currentLevel);
         
@@ -184,13 +184,13 @@ OctreeVT::OctreeVT() :
             break;
         }
 
-        // printLevel("Current Level After subdivision", currentLevel);
-        // printNodeBuffer("After subdivision");
+        printLevel("Current Level After subdivision", currentLevel);
+        printNodeBuffer("After subdivision");
         
         currentLevel = initCurrentLevel(currentLevel);
         
-        // printLevel("Current Level After initiation", currentLevel);
-        // printNodeBuffer("After initiation");
+        printLevel("Current Level After initiation", currentLevel);
+        printNodeBuffer("After initiation");
     }
     printNodeBuffer("Final octree");
     RB_DEBUG("NODE count: " << nodeCount);
@@ -209,8 +209,8 @@ void OctreeVT::render(const AppState& appState)
     if (cam.dirtyFlag) {
         program.loadStandardCamera(cam);
     }
-
-
+    
+    
     // TODO: update vertex buffer when model is dirty
     
     // tmp debug implementation

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <types/AppState.h>
+#include <data/AppState.h>
 #include <visualization/VisualizationTechnique.h>
 
 #include <RenderBase/gl/Program.h>

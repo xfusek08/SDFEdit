@@ -1,6 +1,6 @@
 
-#include <types/AppState.h>
-#include <types/primitives.h>
+#include <data/AppState.h>
+#include <data/primitives.h>
 
 #include <RenderBase/tools/random.h>
 #include <RenderBase/application.h>
@@ -8,8 +8,8 @@
 #include <visualization/SingleVolumeBrickVT.h>
 #include <visualization/OctreeVT.h>
 
-#include <updater.h>
-#include <renderer.h>
+#include <components/updater.h>
+#include <components/renderer.h>
 
 using namespace std;
 using namespace rb;
@@ -48,6 +48,7 @@ class Application : public app::BasicOpenGLApplication
         
         appState->geometryPool->addItems({ Geometry(5) });
         appState->modelPool->addItems({ { 0, Transform() } });
+        
         appState->geometryPool->getItem(0).addEdit(primitives::Sphere::createEdit());
         
         // glm::vec3 min = glm::vec3{-2, -2, -2};

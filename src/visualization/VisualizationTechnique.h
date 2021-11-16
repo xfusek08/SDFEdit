@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <types/AppState.h>
+#include <data/AppState.h>
 
 class VisualizationTechnique
 {

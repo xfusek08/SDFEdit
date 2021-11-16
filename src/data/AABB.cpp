@@ -1,5 +1,5 @@
 
-#include <types/AABB.h>
+#include <data/AABB.h>
 
 AABB AABB::transform(const Transform& tranform) const {
     

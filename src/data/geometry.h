@@ -1,8 +1,9 @@
 
 #pragma once
 
-#include <types/AABB.h>
-#include <types/transform.h>
+#include <data/AABB.h>
+#include <data/Transform.h>
+#include <data/ItemPoolBehavior.h>
 
 #include <RenderBase/defines.h>
 #include <RenderBase/constants.h>
@@ -74,4 +75,10 @@ struct Geometry {
          * Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.
          */
         AABB aabb = AABB();
+};
+
+// TODO: maybe avoid std::vector all togeater as future optimization and hanfle the memory myself inside pre-alllocated fixed chunks
+// to me re-evaluation faster without anny mallocs
+struct GeometryPool : public ItemPoolBehavior<Geometry>
+{
 };

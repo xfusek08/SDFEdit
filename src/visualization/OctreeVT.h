@@ -15,17 +15,17 @@
 class OctreeVT : public VisualizationTechnique
 {
     public:
-    
+        
         OctreeVT();
         void prepare(const AppState& appState) override;
         void render(const AppState& appState) override;
-
+        
     private:
         rb::gl::Program program;
         
         uint32 nodeCount = 0;
         rb::gl::Program octreeProgram;
-    
+        
         std::unique_ptr<rb::gl::Buffer> vertexBuffer;
         std::unique_ptr<rb::gl::VertexArray> vertexArray;
         

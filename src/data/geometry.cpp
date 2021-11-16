@@ -1,6 +1,6 @@
 
-#include <types/geometry.h>
-#include <types/primitives.h>
+#include <data/geometry.h>
+#include <data/primitives.h>
 
 void Geometry::addEdit(GeometryEdit edit)
 {
@@ -14,7 +14,6 @@ void Geometry::addEdits(const std::vector<GeometryEdit>& edits)
         addEdit(edit);
     }
 }
-
 
 void Geometry::clearEdits()
 {

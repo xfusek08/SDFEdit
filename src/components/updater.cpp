@@ -1,7 +1,7 @@
 
-#include <updater.h>
+#include <components/updater.h>
 
-#include <types/primitives.h>
+#include <data/primitives.h>
 
 #include <RenderBase/tools/random.h>
 

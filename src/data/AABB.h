@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <types/transform.h>
+#include <data/Transform.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/component_wise.hpp>
