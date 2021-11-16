@@ -8,8 +8,8 @@
 #include <visualization/SingleVolumeBrickVT.h>
 #include <visualization/OctreeVT.h>
 
-#include <components/updater.h>
-#include <components/renderer.h>
+#include <updater.h>
+#include <renderer.h>
 
 using namespace std;
 using namespace rb;

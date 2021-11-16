@@ -51,10 +51,7 @@ struct Geometry {
      * So its refering to the 'N' of the N x N x N volume.
      */
     glm::u32 resolution;
-    
-    // Methods for encapsulated access to data
-    // ---------------------------------------
-    
+        
     Geometry(glm::f32 resolution = DEFAULT_GEOMETRY_RESOLUTION) : resolution(resolution) {}
     
     void addEdit(GeometryEdit edit);
@@ -66,15 +63,8 @@ struct Geometry {
     inline AABB getAABB() const { return aabb; }
     
     private:
-        /**
-         * List of edits creating this geometry
-         */
-        std::vector<GeometryEdit> edits = {};
-        
-        /**
-         * Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.
-         */
-        AABB aabb = AABB();
+        std::vector<GeometryEdit> edits = {}; // List of edits creating this geometry
+        AABB aabb = AABB(); // Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.
 };
 
 // TODO: maybe avoid std::vector all togeater as future optimization and hanfle the memory myself inside pre-alllocated fixed chunks

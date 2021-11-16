@@ -1,5 +1,5 @@
 
-#include <components/geometryEvaluation.h>
+#include <components/GeometryEvaluator.h>
 
 void GeometryEvaluator::updateGeometries(const GeometryPool& geometryPool)
 {
