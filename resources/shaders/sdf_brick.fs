@@ -11,7 +11,8 @@ uniform vec3 cameraPosition;
 uniform float voxelSize;
 uniform uint  voxelCount;
 uniform sampler3D distanceVolume;
-
+uniform mat4  viewProjection;
+            
 struct Ray {
     vec3  position;
     vec3  direction;
@@ -90,7 +91,12 @@ void main() {
         // if we are near enought to the surface -> sample its color
         if (actSDFValue <= hitDistance) {
             fColor = getHitColor(ray.position, volumeSample.xyz);
-            // fColor = vec4(volumeSample.xyz, 1);
+            
+            // https://stackoverflow.com/a/6622709
+            // vec4 depth_vec = viewProjection * vec4(ray.position, 1); // viewProjection * vec4(gl_FragCoord.xyz, 1.0);
+            // float depth = ((depth_vec.z / depth_vec.w) + 1.0) * 0.5;
+            // gl_FragDepth = depth;
+            // fColor = vec4(vec3(depth), 1);
             return;
         }
         
@@ -105,7 +111,7 @@ void main() {
         ray.position = ray.position + actSDFValue * ray.direction;
     }
     
-    // discard;
+    discard;
     float c = float(steps) / float(MAX_STEPS);
     fColor = vec4(1, 0, 0, c);
 }

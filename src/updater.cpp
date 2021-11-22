@@ -28,8 +28,23 @@ unique_ptr<AppState> AppStateUpdater::onInputChanged(unique_ptr<AppState> oldSta
     return move(oldState);
 }
 
+bool gup = true;
+
 unique_ptr<AppState> AppStateUpdater::onTick(unique_ptr<AppState> oldState, const input::InputState& input, const timing::TimeStep& tick)
 {
     oldState->cameraController->onTick(input, tick);
+    float32 incr = gup ? 0.05 : -0.05;
+    
+    auto primitive = oldState->geometryPool->getItem(0).getEdit(0);
+    auto radius = primitives::Sphere::radius(primitive);
+    primitives::Sphere::setRadius(primitive, radius + incr);
+    if (radius > 1 || radius < 0.2) {
+        gup = !gup;
+    }
+    
+    // if ((tick.order % 3) == 0) {
+        oldState->drawBickCount++;
+    // }
+    
     return move(oldState);
 }

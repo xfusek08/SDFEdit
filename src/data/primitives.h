@@ -10,6 +10,8 @@ namespace primitives {
         inline glm::f32  radius(const GeometryEdit& edit)     { return edit.primitiveData.x; }
         inline glm::vec3 dimensions(const GeometryEdit& edit) { return 2.0f * glm::vec3(radius(edit)) + (edit.blending) * 0.5f; }
         
+        inline void setRadius(GeometryEdit& edit, float32 radius) { edit.primitiveData.x = radius; }
+        
         inline GeometryEdit createEdit(
             glm::u8   operation = GeometryOperation::opAdd,
             Transform transform = {},

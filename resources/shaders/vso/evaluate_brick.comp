@@ -1,0 +1,61 @@
+#version 460 core
+
+#line 3
+
+// Static settings
+
+// BRANCHING_FACTOR macro could defined from the outside
+#ifndef BRANCHING_FACTOR
+    // tile size for branching factor: n = 4
+    #define BRANCHING_FACTOR   4  // n <- keep this powers of two
+#endif
+
+#ifndef BRICK_SIDE_LENGTH
+    #define BRICK_SIDE_LENGTH 8  // lets have NxNxN bricks
+#endif
+
+#if BRANCHING_FACTOR == 2
+    #define NODES_PER_TILE 8
+    #define NODE_TO_TILE(nodeIndex) (nodeIndex >> 3)
+#elif BRANCHING_FACTOR == 4
+    #define NODES_PER_TILE 64
+    #define NODE_TO_TILE(nodeIndex) (nodeIndex >> 6)
+#else
+    #error BRANCHING_FACTOR macro mus wave value 2 or 4
+#endif
+
+#define SUBDIVIDE_THIS_BIT 0x80000000
+#define HAS_BRICK_BIT      0x40000000
+#define NODE_FLAGS_MASK    0xC0000000
+#define CHILD_POINTER_MASK 0x3FFFFFFF
+
+// shader implementation settings
+
+layout(local_size_x = BRICK_SIDE_LENGTH, local_size_y = BRICK_SIDE_LENGTH, local_size_z = BRICK_SIDE_LENGTH) in;
+
+// node pool
+layout(binding = 0, offset = 0) uniform atomic_uint nodeCount;
+layout(std430, binding = 1) buffer NodePool { uint nodes[]; };
+layout(std430, binding = 2) buffer Position { vec4 nodeVertices[]; };
+
+uniform uint levelBeginIndex;
+
+uint newNode(uint tileIndex, uint flags) {
+    return (tileIndex & CHILD_POINTER_MASK) | (flags & NODE_FLAGS_MASK);
+}
+
+void main() {
+    // compute center of vertex
+    // compute distance to voxel center
+    // vote if voxel intersects sdf surface
+    // wait till all threads in group finish voting
+    // if I am first thread and vote was successful, create new node
+    
+    // tmp divide only one tile in whole tree
+    
+    if ((gl_WorkGroupID.x % NODES_PER_TILE == 0 || gl_WorkGroupID.x % NODES_PER_TILE == NODES_PER_TILE - 1) && gl_LocalInvocationIndex == 0) {
+        uint currentNodeIndex = levelBeginIndex + gl_WorkGroupID.x;
+        uint newTileFirstNodeIndex = atomicCounterAdd(nodeCount, NODES_PER_TILE); // spawn tile
+        nodes[currentNodeIndex] = newNode(NODE_TO_TILE(newTileFirstNodeIndex), SUBDIVIDE_THIS_BIT); // link this node to its newly created child and keep its flags
+    }
+}

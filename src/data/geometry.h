@@ -62,6 +62,8 @@ struct Geometry {
     inline glm::u32 getResolution() const { return resolution; }
     inline AABB getAABB() const { return aabb; }
     
+    inline GeometryEdit& getEdit(uint32 index) { return edits[index]; }
+    
     private:
         std::vector<GeometryEdit> edits = {}; // List of edits creating this geometry
         AABB aabb = AABB(); // Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.

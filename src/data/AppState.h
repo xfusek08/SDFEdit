@@ -14,4 +14,6 @@ struct AppState {
     std::unique_ptr<rb::CameraController> cameraController;
     std::unique_ptr<ModelPool>            modelPool;
     std::unique_ptr<GeometryPool>         geometryPool;
+    
+    uint32 drawBickCount = 0;
 };

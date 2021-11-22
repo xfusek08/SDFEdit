@@ -31,12 +31,16 @@ uniform mat4 viewProjection;
 
 void main() {
     vec3 position = gl_in[0].gl_Position.xyz;
-    float d       = gl_in[0].gl_Position.w;
-    vcolor        = color[0];
+    float d       = gl_in[0].gl_Position.w * 0.5;
+    // vcolor        = color[0];w
+    
+    // position = vec3(0,0,0);
+    // d = 0.5 / 2;
     
     // FIRST PRIMITIVE
     #define EMIT_LINE_VERTEX(shift) \
         gl_Position = viewProjection * vec4(position + shift, 1); \
+        vcolor = vec4(clamp(abs((position + shift).xyz) + 0.5, 0.5, 1) , 1);\
         EmitVertex()
     
     EMIT_LINE_VERTEX( FTL(d) );

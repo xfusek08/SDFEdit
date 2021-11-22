@@ -7,6 +7,7 @@
 
 #include <visualization/SingleVolumeBrickVT.h>
 #include <visualization/OctreeVT.h>
+#include <visualization/AxisVT.h>
 
 #include <updater.h>
 #include <renderer.h>
@@ -31,9 +32,9 @@ class Application : public app::BasicOpenGLApplication
         appState = make_unique<AppState>();
         updater  = make_unique<AppStateUpdater>();
         renderer = make_unique<Renderer>(Renderer::VTArray{
-            // TMP VTs
             make_shared<SingleVolumeBrickVT>(),
             make_shared<OctreeVT>(),
+            make_shared<AxisVT>()
         });
         
         // Camera Set up
@@ -49,7 +50,7 @@ class Application : public app::BasicOpenGLApplication
         appState->geometryPool->addItems({ Geometry(5) });
         appState->modelPool->addItems({ { 0, Transform() } });
         
-        appState->geometryPool->getItem(0).addEdit(primitives::Sphere::createEdit());
+        appState->geometryPool->getItem(0).addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform(), 0.3));
         
         // glm::vec3 min = glm::vec3{-2, -2, -2};
         // glm::vec3 max = glm::vec3{2, 2, 2};

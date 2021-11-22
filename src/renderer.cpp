@@ -7,6 +7,8 @@ using namespace rb;
 Renderer::Renderer(vector<shared_ptr<VisualizationTechnique>> vts) : vts(vts)
 {
     glClearColor(0.2, 0.3, 0.7, 1);
+    glEnable(GL_DEPTH_TEST);
+        
 }
 
 void Renderer::render(const AppState& appState)
@@ -20,7 +22,8 @@ void Renderer::render(const AppState& appState)
     }
     
     // Rendering -> each vt renders itself and performs a blocking wating for its preparation process
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
     for (auto& vt : vts) {
         vt->render(appState);
     }

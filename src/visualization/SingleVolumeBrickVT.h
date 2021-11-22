@@ -20,6 +20,7 @@ class SingleVolumeBrickVT : public VisualizationTechnique
         rb::gl::Program renderProgram;
         rb::gl::Program computeProgram;
         
+        GLuint vao;
         std::unique_ptr<rb::gl::Buffer> editsBuffer = nullptr;
         std::unique_ptr<rb::gl::Texture3D> volumeTexture = nullptr;
         uint32  voxelCount = 0;

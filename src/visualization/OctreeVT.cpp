@@ -5,13 +5,13 @@
 
 #include <glm/glm.hpp>
 
-#define GENERATE_POINT_VERTICIES
-#ifdef GENERATE_POINT_VERTICIES
-    #include <glm/gtx/string_cast.hpp>
-    #define OCTREE_PROGRAM_DEFINES gl::ShaderDefines{"DEBUG", "GENERATE_POINT_VERTICIES"}
-#else
-    define OCTREE_PROGRAM_DEFINES gl::ShaderDefines{"DEBUG"}
-#endif
+#include <glm/gtx/string_cast.hpp>
+
+#define BRANCHING_FACTOR 2
+
+#define STRINGIFY2(X) #X
+#define STRINGIFY(X) STRINGIFY2(X)
+#define SHADER_MACROS gl::ShaderDefines{"DEBUG", "BRANCHING_FACTOR " STRINGIFY(BRANCHING_FACTOR)}
 
 using namespace std;
 using namespace rb;
@@ -22,201 +22,172 @@ OctreeVT::OctreeVT() :
         make_shared<gl::Shader>(GL_GEOMETRY_SHADER, RESOURCE_SHADERS_NODE_GS),
         make_shared<gl::Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_NODE_FS)
     ),
-    octreeProgram(
-        make_shared<gl::Shader>(GL_COMPUTE_SHADER, RESOURCE_SHADERS_VSO_TOP_DOWN_CONSTRUCTION_COMP, OCTREE_PROGRAM_DEFINES)
+    octreeEvaluationProgram(
+        make_shared<gl::Shader>(GL_COMPUTE_SHADER, RESOURCE_SHADERS_VSO_EVALUATE_BRICK_COMP, SHADER_MACROS)
+    ),
+    octreeInitiationProgram(
+        make_shared<gl::Shader>(GL_COMPUTE_SHADER, RESOURCE_SHADERS_VSO_INIT_NEW_LEVEL_NODES_COMP, SHADER_MACROS)
     )
 {
     // Octree construction testing
     // ---------------------------
     // NOTE: this should be done only once
     
-    uint32 maxSubdivisions = 4;
-    uint32 branchFactor    = 2;
+    // initial constant settings -> TODO: set this via gui
+    const uint32 maxSubdivisions   = 3;
+    const uint32 branchingFactor   = BRANCHING_FACTOR;
+    const uint32 preallocatedNodes = 1000;
+    const uint32 nodesPerTile      = branchingFactor * branchingFactor * branchingFactor;
     
-    // node counter
-    nodeCount = 8; // one single tile
+    
+    // octree dynamic datastructure on GPU
+    nodeCount                     = nodesPerTile; // one single initial tile
+    uint32 currentLevel           = 0;
+    uint32 currentLevelBeginIndex = 0;
+    uint32 nodesInCurrentLevel    = nodeCount;
     counterBuffer = make_unique<gl::Buffer>(sizeof(uint32), &nodeCount, GL_DYNAMIC_DRAW);
+    nodeBuffer    = make_unique<gl::Buffer>(sizeof(uint32) * preallocatedNodes, nullptr, GL_DYNAMIC_DRAW);
+    vertexBuffer  = make_unique<gl::Buffer>(sizeof(glm::vec4) * preallocatedNodes, nullptr, GL_DYNAMIC_DRAW);
     
-    // Calculate maximum node number given maximum subdivision
-    // -------------------------------------------------------
-    // Node pool has to be fully pre-allocated octree of depth 2 will contan maximum of 648 nodes
-    //
-    // Given that branching factor is 2 => 2^3 = 8 nodes per tile:
-    //
-    // level      tiles         nodes           TOTAL NODES
-    // 0      |   1 = 8^0  |   1 * 8 =    8  |    8
-    // 1      |   8 = 8^1  |   8 * 8 =   64  |    8 +   64 =   72
-    // 2      |  64 = 8^2  |  64 * 8 =  512  |   72 +  512 =  584
-    // 3      | 512 = 8^3  | 512 * 8 = 4096  |  584 + 4096 = 4680
-    // --------------------------------------------------------
-    //
-    // For branching factor 2 recurrent equation for total nodes is:
-    //      a(n) = (8^n) * 8 + a(n-1); a(0) = 8
-    //
-    // For arbitrary branching factor b the equation is:
-    //      a(n) = ((b^3)^n) * (b^3) + a(n-1); a(0) = b^3
-    //
-    // The solved equation for n as max tree level and b as branching factor is:
-    //      a(n) = (b^3 ((b^3)^(n + 1) - 1))/(b^3 - 1)
-    //
-    //      see: https://www.wolframalpha.com/input/?i=a%28n%29+%3D+%28%28b%5E3%29%5En%29+*+%28b%5E3%29+%2B+a%28n-1%29%3B+a%280%29+%3D+b%5E3
-    //
-    glm::f32 n = maxSubdivisions;
-    glm::f32 b3 = glm::pow(branchFactor, 3);
-    uint32 nodesNumber = (b3 * (glm::pow(b3, n + 1) - 1)) / (b3 - 1);
-    nodeBuffer = make_unique<gl::Buffer>(sizeof(uint32) * nodesNumber, nullptr, GL_DYNAMIC_DRAW);
+    // bind those buffers
+    counterBuffer->bindBase(GL_ATOMIC_COUNTER_BUFFER, 0);
+    nodeBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 1);
+    vertexBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 2);
     
-    #ifdef GENERATE_POINT_VERTICIES
-        vertexBuffer = make_unique<gl::Buffer>(sizeof(glm::vec4) * nodesNumber, nullptr, GL_DYNAMIC_DRAW);
-        vector<glm::vec4> firstTileVerticies = {
-            glm::vec4(-0.5,  0.5,  0.5, 0.5),
-            glm::vec4( 0.5,  0.5,  0.5, 0.5),
-            glm::vec4(-0.5, -0.5,  0.5, 0.5),
-            glm::vec4( 0.5, -0.5,  0.5, 0.5),
-            glm::vec4(-0.5,  0.5, -0.5, 0.5),
-            glm::vec4( 0.5,  0.5, -0.5, 0.5),
-            glm::vec4(-0.5, -0.5, -0.5, 0.5),
-            glm::vec4( 0.5, -0.5, -0.5, 0.5)
-        };
-        vertexBuffer->setData(firstTileVerticies);
-    #endif
-
-    auto printNodeBuffer = [&](const char* caption) {
+    // render content of those buffers for debug reasons
+    auto printLevel = [&](const char* caption) {
         auto nodes = vector<uint32>(nodeCount, 0);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-        nodeBuffer->getData(nodes);
+        auto verticies = vector<glm::vec4>(nodeCount, glm::vec4(0));
         
-        #ifdef GENERATE_POINT_VERTICIES
-            auto verticies = vector<glm::vec4>(nodeCount, glm::vec4(0));
-            vertexBuffer->getData(verticies);
-            #define ADD_VERTEX_INFO(I) << "    " << glm::to_string(verticies[I])
-        #else
-            #define ADD_VERTEX_INFO(I)
-        #endif
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        
+        nodeBuffer->getData(nodes);
+        vertexBuffer->getData(verticies);
         
         RB_DEBUG(caption << ":");
+        RB_DEBUG("  beginNodeIndex: " << currentLevelBeginIndex);
+        RB_DEBUG("  nodesInLevel: " << nodesInCurrentLevel);
+        RB_DEBUG("  currentLevel: " << currentLevel);
         RB_DEBUG("  Tiles:");
-        for (int tileIndex = 0; tileIndex < nodeCount / 8; ++tileIndex) {
+        for (int tileIndex = 0; tileIndex < nodeCount / nodesPerTile; ++tileIndex) {
             RB_DEBUG("    Tile: " << tileIndex);
-            for (int localIndex = 0; localIndex < 8; ++localIndex) {
-                int i = tileIndex * 8 + localIndex;
+            for (int localIndex = 0; localIndex < nodesPerTile; ++localIndex) {
+                int i = tileIndex * nodesPerTile + localIndex;
                 RB_DEBUG("      (" << i << ") " << localIndex << ":  " <<
                     ((nodes[i] & 0x80000000) ? "1" : "0") <<
                     " | " <<((nodes[i] & 0x40000000) ? "1" : "0") <<
-                    " | " << (nodes[i] & 0x3FFFFFFF) ADD_VERTEX_INFO(i)
+                    " | " << (nodes[i] & 0x3FFFFFFF) <<
+                    "   " << glm::to_string(verticies[i])
                 );
             }
         }
         RB_DEBUG(" ");
     };
     
-    // Current octree level is:
-    //    begining index (first node of this level)
-    //    number of nodes in this level
-    struct CurrentSVOLevel {
-        uint32 beginNodeIndex;
-        uint32 nodesInLevel;
-    };
-    auto printLevel = [](const char* caption, CurrentSVOLevel level) {
-        RB_DEBUG(caption << "\n" <<
-            "    beginNodeIndex: " << level.beginNodeIndex << "\n"
-            "      nodesInLevel: " << level.nodesInLevel
-        );
-    };
+    // program - global setup
     
-    // STEP 1 Flagging for subdivision step
-    auto flagNodes = [&]() {
-        octreeProgram.uniform("levelBeginIndex", 0);
-        octreeProgram.uniform("stage", uint32(0));
-        glDispatchCompute(nodeCount / 8, 1, 1);
-        glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
-    };
+    // definitions of program algorithm stages:
     
+    // STAGE 1 generating volume and subdividing on demand
+    // Current SVO level is initialized and each tile is zeroed and has defined its position.
+    // Spawn a workgroup for each node tile which will compute a brick volume associated with it.
+    // Each node tile is evaluated using 8x8x8 thrreads one for each voxel in the volume.
+    // This threads will calculate and store distances an base on that they will vote to subdivide the node or not to.
+    // If at least one voxel intersects with the volume surface, the nod will get divided.
+    // The division will be doe by first thread in workgroup (if any thread requests division) by incrementing node counter
+    // to hold new node tile. The tile will be uninitialized so next stage will need to be computed.
     
-    // STEP 2 dispatch only over current level of nodes
-    //        for each node which is flagged as "to be subdivided"
-    //        allocate new node -> new level is created with only uninitialized node
-    auto subdivideLevel = [&](CurrentSVOLevel level) {
-        octreeProgram.uniform("levelBeginIndex", level.beginNodeIndex);
-        octreeProgram.uniform("stage", uint32(1));
-        glDispatchCompute(level.nodesInLevel / 8, 1, 1);
+    auto evaluateLevel = [&]() {
+        octreeEvaluationProgram.use();
+        octreeEvaluationProgram.uniform("levelBeginIndex", currentLevelBeginIndex);
+        
+        // one brick evaluated in one workgroup per tile
+        RB_DEBUG("Evaluating " << nodesInCurrentLevel << " bricks at level " << currentLevel);
+        glDispatchCompute(nodesInCurrentLevel, 1, 1);
+        
+        // read new nodeCount
         glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
         counterBuffer->getData(&nodeCount, sizeof(uint32));
-        return CurrentSVOLevel{
-            level.nodesInLevel + level.beginNodeIndex,
-            nodeCount - (level.nodesInLevel + level.beginNodeIndex),
-        };
     };
     
-    
-    // STEP 3 launch ini shader for new node level and null all this nodes
-    auto initCurrentLevel = [&](CurrentSVOLevel level) {
-        octreeProgram.uniform("levelBeginIndex", level.beginNodeIndex);
-        octreeProgram.uniform("stage", uint32(2));
-        glDispatchCompute(level.nodesInLevel / 8, 1, 1);
-        glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
-        return level;
-    };
-    
-    // prepare program
-    octreeProgram.use();
-    counterBuffer->bindBase(GL_ATOMIC_COUNTER_BUFFER, 0);
-    nodeBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 1);
-    octreeProgram.uniform("maxSubdivisionLevel", maxSubdivisions);
-    #ifdef GENERATE_POINT_VERTICIES
-        vertexBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 2);
-    #endif
-    
-    // top down algorithm
-    CurrentSVOLevel currentLevel = initCurrentLevel({ 0, nodeCount});
-    // printLevel("initial level", currentLevel);
-    // printNodeBuffer("After init dispatch");
-    
-    for (int i = 0; i < maxSubdivisions; ++i) {
-        flagNodes();
-     
-        printLevel("Current Level After Flagging", currentLevel);
-        printNodeBuffer("After flagging");
-     
-        currentLevel = subdivideLevel(currentLevel);
-        
-        if (currentLevel.nodesInLevel == 0) {
-            break;
+    // STAGE 2 - initialize next level
+    // Current level is initialized and new uninitialized node tiles for this level are created
+    // this stage will spawn a workgroup for each tile in current level with thread for each children in child node tile.
+    // Each thread will zero the childs node data and calculate its center position.
+    auto initializeLevel = [&](uint32 rootInit) {
+        octreeInitiationProgram.use();
+        octreeInitiationProgram.uniform("levelBeginIndex", currentLevelBeginIndex);
+        octreeInitiationProgram.uniform("initRootTile", rootInit);
+        RB_DEBUG("Initiating " << nodesInCurrentLevel << " nodes at level " << currentLevel << " (" << (nodesInCurrentLevel / nodesPerTile) << " tiles)");
+        if (rootInit) {
+            glDispatchCompute(1, 1, 1); // one workgroup for first tile
+        } else {
+            glDispatchCompute(nodesInCurrentLevel, 1, 1);
         }
+    };
+    
+    // This is procedure which make sure that there is enough allocated storage in the SVO buffers for newly created nodes
+    auto checkBufferStorageSizes = [&]() {
+        auto resizeBuffer = [](gl::Buffer& buffer, uint32 requestedSize) {
+            uint32 origSize = buffer.getSize();
+            uint32 newSize = origSize;
+            while(requestedSize > newSize) {
+                newSize *= 1.5;
+            }
+            if (newSize != origSize) {
+                RB_DEBUG("Buffer " << buffer.getGlID() << " reallocation: " << origSize << "->" << newSize);
+                buffer.resize(newSize);
+            }
+        };
+        resizeBuffer(*nodeBuffer, sizeof(uint32) * nodeCount);
+        resizeBuffer(*vertexBuffer, sizeof(glm::vec4) * nodeCount);
+    };
+    
+    // initiation of the first tile
+    printLevel("Before any initiation");
+    initializeLevel(1);
+    printLevel("Current Level After initiation");
 
-        printLevel("Current Level After subdivision", currentLevel);
-        printNodeBuffer("After subdivision");
+    // run the algorithm using procedures above
+    while (nodesInCurrentLevel > 0 && currentLevel < maxSubdivisions) {
         
-        currentLevel = initCurrentLevel(currentLevel);
+        evaluateLevel();
+        checkBufferStorageSizes();
+     
+        printLevel("Current Level After evaluating");
         
-        printLevel("Current Level After initiation", currentLevel);
-        printNodeBuffer("After initiation");
+        initializeLevel(0);
+        
+        // step into the next level
+        printLevel("Current Level Initiation");
+        
+        // step into next level
+        currentLevelBeginIndex = nodesInCurrentLevel + currentLevelBeginIndex;
+        nodesInCurrentLevel    = nodeCount - currentLevelBeginIndex;
+        currentLevel++;
+        RB_DEBUG("Stepped into next level with " << (nodesInCurrentLevel / nodesPerTile) << " new node tiles (" << nodesInCurrentLevel << " nodes).");
     }
-    printNodeBuffer("Final octree");
+    
+    printLevel("Final octree");
     RB_DEBUG("NODE count: " << nodeCount);
+    
     vertexArray = make_unique<gl::VertexArray>();
     vertexArray->addAttrib(*vertexBuffer, 0, 4, GL_FLOAT);
 }
 
 void OctreeVT::prepare(const AppState& appState)
 {
-}
-
-void OctreeVT::render(const AppState& appState)
-{
     // camera update
     auto cam = appState.cameraController->getCamera();
     if (cam.dirtyFlag) {
         program.loadStandardCamera(cam);
     }
-    
-    
-    // TODO: update vertex buffer when model is dirty
-    
-    // tmp debug implementation
-    // ------------------
-    
+}
+
+void OctreeVT::render(const AppState& appState)
+{
     program.use();
     vertexArray->bind();
-    glDrawArrays(GL_POINTS, 0, nodeCount);
+    glDrawArrays(GL_POINTS, 0, glm::clamp(appState.drawBickCount, uint32(0), nodeCount));
+    // glDrawArrays(GL_POINTS, 0, nodeCount);
 }
