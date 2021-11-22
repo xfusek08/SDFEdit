@@ -42,7 +42,7 @@ unique_ptr<AppState> AppStateUpdater::onTick(unique_ptr<AppState> oldState, cons
         gup = !gup;
     }
     
-    // if ((tick.order % 3) == 0) {
+    // if ((tick.order % 30) == 0) {
         oldState->drawBickCount++;
     // }
     

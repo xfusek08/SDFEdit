@@ -88,7 +88,7 @@ void main() {
         vec4  volumeSample = sampleVolume(ray.position);
         float actSDFValue  = volumeSample.w;
         
-        // if we are near enought to the surface -> sample its color
+        // if we are near enough to the surface -> sample its color
         if (actSDFValue <= hitDistance) {
             fColor = getHitColor(ray.position, volumeSample.xyz);
             

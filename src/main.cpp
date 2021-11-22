@@ -32,7 +32,7 @@ class Application : public app::BasicOpenGLApplication
         appState = make_unique<AppState>();
         updater  = make_unique<AppStateUpdater>();
         renderer = make_unique<Renderer>(Renderer::VTArray{
-            make_shared<SingleVolumeBrickVT>(),
+            // make_shared<SingleVolumeBrickVT>(),
             make_shared<OctreeVT>(),
             make_shared<AxisVT>()
         });
