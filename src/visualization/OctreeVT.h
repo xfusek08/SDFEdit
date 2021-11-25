@@ -6,6 +6,7 @@
 #include <RenderBase/gl/Program.h>
 #include <RenderBase/gl/Buffer.h>
 #include <RenderBase/gl/VertexArray.h>
+#include <RenderBase/gl/Texture3D.h>
 
 /**
  * Octree visualization technique
@@ -21,9 +22,11 @@ class OctreeVT : public VisualizationTechnique
         void render(const AppState& appState) override;
         
     private:
-        rb::gl::Program program;
+        rb::gl::Program octreeWireFrameProgram;
+        rb::gl::Program brickRenderProgram;
         
         uint32 nodeCount = 0;
+        uint32 brickCount = 0;
         rb::gl::Program octreeEvaluationProgram;
         rb::gl::Program octreeInitiationProgram;
         
@@ -35,6 +38,10 @@ class OctreeVT : public VisualizationTechnique
         std::unique_ptr<rb::gl::Buffer> counterBuffer;
         
         std::unique_ptr<rb::gl::Buffer> editBuffer;
+        std::unique_ptr<rb::gl::Texture3D>  volumeTexture;
+        
+        uint currentLevelBeginIndex;
+        uint nodesInCurrentLevel;
         
         bool prepared = false;
 };

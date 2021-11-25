@@ -31,7 +31,7 @@ uniform mat4 viewProjection;
 
 void main() {
     vec3 position = gl_in[0].gl_Position.xyz;
-    float d       = gl_in[0].gl_Position.w * 0.5;
+    float d       = gl_in[0].gl_Position.w * 0.3;
     // vcolor        = color[0];w
     
     // position = vec3(0,0,0);

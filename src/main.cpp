@@ -47,18 +47,20 @@ class Application : public app::BasicOpenGLApplication
         // Preparing the test geometry
         // ----------------------
         
-        appState->geometryPool->addItems({ Geometry(5) });
+        appState->geometryPool->addItems({ Geometry(8) });
         appState->modelPool->addItems({ { 0, Transform() } });
         
-        appState->geometryPool->getItem(0).addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform(), 0.3));
+        // appState->geometryPool->getItem(0).addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 0.5));
+        // appState->geometryPool->getItem(0).addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({1,2,0}), 0.3));
         
-        // glm::vec3 min = glm::vec3{-2, -2, -2};
-        // glm::vec3 max = glm::vec3{2, 2, 2};
-        // for (int i = 0; i < 100; ++i) {
-        //     appState->geometryPool->getItem(0).addEdit(
-        //         primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.001, 0.7))
-        //     );
-        // }
+        glm::vec3 min = glm::vec3{-10, -10, -10};
+        glm::vec3 max = glm::vec3{10, 10, 10};
+        for (int i = 0; i < 100; ++i) {
+            appState->geometryPool->getItem(0).addEdit(
+                primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.01, 1.5))
+            );
+        }
+        
         return true;
     }
 

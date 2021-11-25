@@ -7,7 +7,7 @@ using namespace rb;
 Renderer::Renderer(vector<shared_ptr<VisualizationTechnique>> vts) : vts(vts)
 {
     glClearColor(0.2, 0.3, 0.7, 1);
-    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEPTH_TEST);
         
 }
 

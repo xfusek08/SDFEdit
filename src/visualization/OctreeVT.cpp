@@ -7,7 +7,7 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-#define BRANCHING_FACTOR 4
+#define BRANCHING_FACTOR 2
 
 #define STRINGIFY2(X) #X
 #define STRINGIFY(X) STRINGIFY2(X)
@@ -17,7 +17,7 @@ using namespace std;
 using namespace rb;
 
 OctreeVT::OctreeVT() :
-    program(
+    octreeWireFrameProgram(
         make_shared<gl::Shader>(GL_VERTEX_SHADER,   RESOURCE_SHADERS_NODE_VS),
         make_shared<gl::Shader>(GL_GEOMETRY_SHADER, RESOURCE_SHADERS_NODE_GS),
         make_shared<gl::Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_NODE_FS)
@@ -27,6 +27,11 @@ OctreeVT::OctreeVT() :
     ),
     octreeInitiationProgram(
         make_shared<gl::Shader>(GL_COMPUTE_SHADER, RESOURCE_SHADERS_VSO_INIT_NEW_LEVEL_NODES_COMP, SHADER_MACROS)
+    ),
+    brickRenderProgram(
+        make_shared<gl::Shader>(GL_VERTEX_SHADER,   RESOURCE_SHADERS_BRICK_VS),
+        make_shared<gl::Shader>(GL_GEOMETRY_SHADER, RESOURCE_SHADERS_BRICK_GS),
+        make_shared<gl::Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_BRICK_FS)
     )
 {
 }
@@ -39,15 +44,54 @@ void OctreeVT::prepare(const AppState& appState)
         // load list of edits on to GPU
         const Geometry& geometry = appState.geometryPool->getItem(0);
         
-        // Nearest upper number of voxels divisible by 8 in one edge of volume.
-        uint32 voxelCount = glm::round(glm::f32(geometry.getResolution()) / 8.0f) * 8.0f;
+        // initial constant settings -> TODO: set this via gui
+        const uint32 maxSubdivisions     = 5;
+        const uint32 branchingFactor     = BRANCHING_FACTOR;
+        const uint32 preallocatedNodes   = 10000;
+        const uint32 nodesPerTile        = branchingFactor * branchingFactor * branchingFactor;
+        const uint32 brickSize           = 8;
+        const uint32 brickInOneDimension = 64;           // lets have 3d texture holding 64 x 64 x 64 bricks (512^3 voxels)
+        const uint32 maximalBrickCount   = 64 * 64 * 64; // 262144 bricks - no additional bricks will be allocated
+        const glm::vec4 correctionVector = glm::vec4(geometry.getAABB().center(), geometry.getAABB().longestEdgeSize()); // shift and scale SVO to be aligned with BB of the geometry
         
-        // Unit cube around the BB is divided into geometry.resolution^3 cubical voxels.
-        uint32 voxelSize = geometry.getAABB().longestEdgeSize() / glm::f32(voxelCount - 2);
-        // voxelSize = geometry.getAABB().longestEdgeSize() / glm::f32(voxelCount);
         
-        // Primitives inside geometry will be displaced relative to the center of BB the insted of geometry origin.
-        glm::vec3 primitiveCenterCorrection = -geometry.getAABB().center();
+        // 3d texture for nodes preparation:
+        // ---------------------------------
+
+        volumeTexture = make_unique<gl::Texture3D>();
+        glTextureParameteri(volumeTexture->getGlID(), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTextureParameteri(volumeTexture->getGlID(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTextureParameteri(volumeTexture->getGlID(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTextureParameteri(volumeTexture->getGlID(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTextureParameteri(volumeTexture->getGlID(), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+        float borderDistance = 1.0f / glm::pow(BRANCHING_FACTOR, maxSubdivisions);
+        glTextureParameterfv(volumeTexture->getGlID(), GL_TEXTURE_BORDER_COLOR, &borderDistance);
+        glBindTexture(GL_TEXTURE_3D, volumeTexture->getGlID());
+        glTexImage3D(
+            GL_TEXTURE_3D,
+            0,
+            GL_RED,
+            brickInOneDimension * brickSize,
+            brickInOneDimension * brickSize,
+            brickInOneDimension * brickSize,
+            0,
+            GL_RGBA,
+            GL_FLOAT,
+            nullptr
+        );
+        glBindImageTexture(
+            0,                        // Texture unit
+            volumeTexture->getGlID(), // Texture name
+            0,                        // Level of Mip Map
+            GL_TRUE,                  // Layered (false) -> this needs to be true because we have 3d texture
+            0,                        // Specify layer if Layered is GL_FALSE
+            GL_WRITE_ONLY,            // access
+            GL_RGBA32F                // format
+        );
+        
+            
+        // Edit buffer preparation
+        // ------------------------
         
         struct Edit {
             uint32    type;
@@ -72,23 +116,19 @@ void OctreeVT::prepare(const AppState& appState)
             });
         }
         editBuffer = make_unique<gl::Buffer>(editsData, GL_DYNAMIC_DRAW);
+              
         
-        // Octree construction testing
+        // Octree NODE POOL initiation
         // ---------------------------
-        // NOTE: this should be done only once
         
-        // initial constant settings -> TODO: set this via gui
-        const uint32 maxSubdivisions   = 5;
-        const uint32 branchingFactor   = BRANCHING_FACTOR;
-        const uint32 preallocatedNodes = 1000;
-        const uint32 nodesPerTile      = branchingFactor * branchingFactor * branchingFactor;
+        nodeCount              = nodesPerTile; // one single initial tile
+        brickCount             = 0;
+        uint32 currentLevel    = 0;
+        currentLevelBeginIndex = 0;
+        nodesInCurrentLevel    = nodeCount;
         
-        // octree dynamic datastructure on GPU
-        nodeCount                     = nodesPerTile; // one single initial tile
-        uint32 currentLevel           = 0;
-        uint32 currentLevelBeginIndex = 0;
-        uint32 nodesInCurrentLevel    = nodeCount;
-        counterBuffer = make_unique<gl::Buffer>(sizeof(uint32), &nodeCount, GL_DYNAMIC_DRAW);
+        uint32 counters[2] = { nodeCount,  brickCount };
+        counterBuffer = make_unique<gl::Buffer>(2 * sizeof(uint32), counters, GL_DYNAMIC_DRAW);
         nodeBuffer    = make_unique<gl::Buffer>(sizeof(uint32) * preallocatedNodes, nullptr, GL_DYNAMIC_DRAW);
         vertexBuffer  = make_unique<gl::Buffer>(sizeof(glm::vec4) * preallocatedNodes, nullptr, GL_DYNAMIC_DRAW);
         
@@ -154,15 +194,12 @@ void OctreeVT::prepare(const AppState& appState)
         // to hold new node tile. The tile will be uninitialized so next stage will need to be computed.
         
         octreeEvaluationProgram.uniform("maxSubdivisions", maxSubdivisions);
+        octreeEvaluationProgram.uniform("correctionVector", correctionVector);
         auto evaluateLevel = [&]() {
             octreeEvaluationProgram.use();
             octreeEvaluationProgram.uniform("levelBeginIndex", currentLevelBeginIndex);
             octreeEvaluationProgram.uniform("currentLevel", currentLevel);
-            
-            // octreeEvaluationProgram.uniform("centerCorrection", -geometry.getAABB().center());
-            // octreeEvaluationProgram.uniform("voxelSize", voxelSize);
-            // octreeEvaluationProgram.uniform("voxelCount", voxelCount);
-            // octreeEvaluationProgram.uniform("editCount", uint32(geometry.getEdits().size()));
+            octreeEvaluationProgram.uniform("editCount", uint32(geometry.getEdits().size()));
 
             // one brick evaluated in one workgroup per tile
             RB_DEBUG("Evaluating " << nodesInCurrentLevel << " bricks at level " << currentLevel);
@@ -170,13 +207,17 @@ void OctreeVT::prepare(const AppState& appState)
             
             // read new nodeCount
             glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
-            counterBuffer->getData(&nodeCount, sizeof(uint32));
+            uint32 counterData[2];
+            counterBuffer->getData(&counterData, 2 * sizeof(uint32));
+            nodeCount  = counterData[0];
+            brickCount = counterData[1];
         };
         
         // STAGE 2 - initialize next level
         // Current level is initialized and new uninitialized node tiles for this level are created
         // this stage will spawn a workgroup for each tile in current level with thread for each children in child node tile.
         // Each thread will zero the childs node data and calculate its center position.
+        octreeInitiationProgram.uniform("correctionVector", correctionVector);
         auto initializeLevel = [&](uint32 rootInit) {
             octreeInitiationProgram.use();
             octreeInitiationProgram.uniform("levelBeginIndex", currentLevelBeginIndex);
@@ -237,7 +278,11 @@ void OctreeVT::prepare(const AppState& appState)
         }
         
         // printLevel("Final octree");
-        RB_DEBUG("NODE count: " << nodeCount);
+        RB_DEBUG("NODE count: "       << nodeCount);
+        RB_DEBUG("Brick count: "       << brickCount);
+        RB_DEBUG("Current level: "     << currentLevel);
+        RB_DEBUG("Level begin index: " << currentLevelBeginIndex);
+        RB_DEBUG("Nodes in level: "    << nodesInCurrentLevel);
         
         vertexArray = make_unique<gl::VertexArray>();
     }
@@ -245,19 +290,32 @@ void OctreeVT::prepare(const AppState& appState)
     // camera update
     auto cam = appState.cameraController->getCamera();
     if (cam.dirtyFlag) {
-        program.loadStandardCamera(cam);
+        octreeWireFrameProgram.loadStandardCamera(cam);
+        brickRenderProgram.loadStandardCamera(cam);
     }
 }
 
 void OctreeVT::render(const AppState& appState)
 {
-    program.use();
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE);
+    brickRenderProgram.use();
     vertexArray->bind();
+    vertexArray->addAttrib(*vertexBuffer, 0, 4, GL_FLOAT, 0, sizeof(glm::vec4) * currentLevelBeginIndex);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT); // wait till texture is finished
+    glDrawArrays(GL_POINTS, 0, nodesInCurrentLevel);
     
-    uint32 size = nodeCount;
-    uint cnt = size; //glm::clamp(appState.drawBickCount, uint32(0), size);
-    vertexArray->addAttrib(*vertexBuffer, 0, 4, GL_FLOAT);
-    glDrawArrays(GL_POINTS, 0, cnt);
+    // octreeWireFrameProgram.use();
+    // vertexArray->bind();
+    // vertexArray->addAttrib(*vertexBuffer, 0, 4, GL_FLOAT);
+    // glDrawArrays(GL_POINTS, 0, nodeCount);
+
+    // octreeWireFrameProgram.use();
+    // vertexArray->bind();
+    // vertexArray->addAttrib(*vertexBuffer, 0, 4, GL_FLOAT, 0, sizeof(glm::vec4) * currentLevelBeginIndex);
+    // glDrawArrays(GL_POINTS, 0, nodesInCurrentLevel);
     
     // size = 8*8*8;
     // cnt = size; //glm::clamp(appState.drawBickCount, uint32(0), size);

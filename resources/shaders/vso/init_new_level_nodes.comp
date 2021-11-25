@@ -23,6 +23,7 @@ layout(std430, binding = 2) buffer Position { vec4 nodeVertices[]; };
 
 uniform uint levelBeginIndex;
 uniform uint initRootTile;
+uniform vec4 correctionVector;
 
 void main() {
     
@@ -37,7 +38,7 @@ void main() {
     // All branching is common for all threads in the group
     if (initRootTile == 1) {
         node      = 0;
-        parentPos = vec4(0,0,0,1);
+        parentPos = vec4(0, 0, 0, correctionVector.w);
     } else {
         node      = nodes[parentIndex];
         parentPos = nodeVertices[parentIndex];

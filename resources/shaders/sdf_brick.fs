@@ -111,7 +111,7 @@ void main() {
         ray.position = ray.position + actSDFValue * ray.direction;
     }
     
-    discard;
+    // discard;
     float c = float(steps) / float(MAX_STEPS);
     fColor = vec4(1, 0, 0, c);
 }
