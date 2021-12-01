@@ -1,11 +1,13 @@
 
 #pragma once
 
-#include <data/AppState.h>
+#include <data/Scene.h>
 
 class VisualizationTechnique
 {
     public:
-        virtual void prepare(const AppState& appState) = 0;
-        virtual void render(const AppState& appState) = 0;
+        virtual void prepare(const Scene& scene) = 0;
+        virtual void render(const Scene& scene) = 0;
 };
+
+using VTArray = std::vector<std::shared_ptr<VisualizationTechnique>>;

@@ -2,17 +2,20 @@
 #pragma once
 
 #include <data/Transform.h>
-#include <data/ItemPoolBehavior.h>
+#include <data/geometry.h>
 
 #include <RenderBase/defines.h>
+#include <RenderBase/ds/Pool.h>
 
 struct Model {
-    glm::u32  geometryId;
-    Transform transform;
+    
+    Model(GeometryPool::ID geometryId, Transform transform = Transform()) :
+        geometryId(geometryId), transform(transform) { }
+    
+    Transform        transform;
+    GeometryPool::ID geometryId;
+    
     // TODO: additional model properties which might be used in shading
 };
 
-// TODO: + models will be tightly packed into continuous buffer and managend by this poll, which will track changes of the models and updates them to the gpu
-struct ModelPool : public ItemPoolBehavior<Model>
-{
-};
+using ModelPool = rb::ds::Pool<Model>;

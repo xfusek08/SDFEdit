@@ -13,8 +13,8 @@ class SingleVolumeBrickVT : public VisualizationTechnique
     
         SingleVolumeBrickVT();
         
-        void prepare(const AppState& appState) override;
-        void render(const AppState& appState) override;
+        void prepare(const Scene& scene) override;
+        void render(const Scene& scene) override;
         
     private:
         rb::gl::Program renderProgram;

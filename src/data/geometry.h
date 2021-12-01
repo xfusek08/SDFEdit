@@ -3,10 +3,12 @@
 
 #include <data/AABB.h>
 #include <data/Transform.h>
-#include <data/ItemPoolBehavior.h>
+#include <data/SVOctree.h>
 
 #include <RenderBase/defines.h>
 #include <RenderBase/constants.h>
+
+#include <RenderBase/ds/Pool.h>
 
 #include <glm/glm.hpp>
 
@@ -46,11 +48,17 @@ struct GeometryEdit {
 };
 
 struct Geometry {
+    
     /**
      * Resolution means imply the number of voxels along one edge ot the volume cube.
      * So its refering to the 'N' of the N x N x N volume.
      */
     glm::u32 resolution;
+    
+    std::shared_ptr<SVOctree> evaluatedGeometry = nullptr;
+    
+    bool dirty = true;
+    
         
     Geometry(glm::f32 resolution = DEFAULT_GEOMETRY_RESOLUTION) : resolution(resolution) {}
     
@@ -65,12 +73,13 @@ struct Geometry {
     inline GeometryEdit& getEdit(uint32 index) { return edits[index]; }
     
     private:
-        std::vector<GeometryEdit> edits = {}; // List of edits creating this geometry
-        AABB aabb = AABB(); // Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.
+    
+        // List of edits creating this geometry
+        std::vector<GeometryEdit> edits = {};
+        
+        // Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.
+        AABB aabb = AABB();
 };
 
-// TODO: maybe avoid std::vector all togeater as future optimization and hanfle the memory myself inside pre-alllocated fixed chunks
-// to me re-evaluation faster without anny mallocs
-struct GeometryPool : public ItemPoolBehavior<Geometry>
-{
-};
+using GeometryPool = rb::ds::Pool<Geometry>;
+using GeometryID   = rb::ds::Pool<Geometry>::ID;

@@ -21,27 +21,26 @@ SingleVolumeBrickVT::SingleVolumeBrickVT() :
     glCreateVertexArrays(1, &vao);
 }
 
-void SingleVolumeBrickVT::prepare(const AppState& appState)
+void SingleVolumeBrickVT::prepare(const Scene& scene)
 {
     // Choose geometry to evaluate onto GPU
     // ------------------------------------
     
-    if (appState.geometryPool->getItemState(0) != ItemState::clean) {
-        
-        const Geometry& geometry = appState.geometryPool->getItem(0);
+    auto geometry = scene.geometryPool[0];
+    if (geometry->dirty) {
         
         // Compute basic metadata about bounding voxelized volume (shader uniforms)
         // -----------------------------------------------------------------------------
         
         // Nearest upper number of voxels divisible by 8 in one edge of volume.
-        voxelCount = glm::round(glm::f32(geometry.getResolution()) / 8.0f) * 8.0f;
+        voxelCount = glm::round(glm::f32(geometry->getResolution()) / 8.0f) * 8.0f;
         
-        // Unit cube around the BB is divided into geometry.resolution^3 cubical voxels.
-        voxelSize = (geometry.getAABB().longestEdgeSize() + BOUNDING_OFFSET) / glm::f32(voxelCount - 2);
-        // voxelSize = geometry.getAABB().longestEdgeSize() / glm::f32(voxelCount);
+        // Unit cube around the BB is divided into geometry->resolution^3 cubical voxels.
+        voxelSize = (geometry->getAABB().longestEdgeSize() + BOUNDING_OFFSET) / glm::f32(voxelCount - 2);
+        // voxelSize = geometry->getAABB().longestEdgeSize() / glm::f32(voxelCount);
         
         // Primitives inside geometry will be displaced relative to the center of BB the insted of geometry origin.
-        glm::vec3 primitiveCenterCorrection = -geometry.getAABB().center();
+        glm::vec3 primitiveCenterCorrection = -geometry->getAABB().center();
         
         
         
@@ -59,7 +58,7 @@ void SingleVolumeBrickVT::prepare(const AppState& appState)
         };
         
         std::vector<Edit> editsData;
-        for (auto e : geometry.getEdits()) {
+        for (auto e : geometry->getEdits()) {
             editsData.push_back({
                 e.primitiveType,
                 e.operation,
@@ -109,10 +108,10 @@ void SingleVolumeBrickVT::prepare(const AppState& appState)
         // ------------------------
         
         computeProgram.use();
-        computeProgram.uniform("centerCorrection", -geometry.getAABB().center());
+        computeProgram.uniform("centerCorrection", -geometry->getAABB().center());
         computeProgram.uniform("voxelSize", voxelSize);
         computeProgram.uniform("voxelCount", voxelCount);
-        computeProgram.uniform("editCount", uint32(geometry.getEdits().size()));
+        computeProgram.uniform("editCount", uint32(geometry->getEdits().size()));
         
         editsBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 0);
         // Prepare texture to be written to:
@@ -161,14 +160,14 @@ void SingleVolumeBrickVT::prepare(const AppState& appState)
     renderProgram.uniform("voxelSize",  voxelSize);
     renderProgram.uniform("voxelCount", voxelCount);
 
-    auto cam = appState.cameraController->getCamera();
+    auto cam = scene.cameraController->getCamera();
     if (cam.dirtyFlag) {
         renderProgram.loadStandardCamera(cam);
         cam.dirtyFlag = false;
     }
 }
 
-void SingleVolumeBrickVT::render(const AppState& appState)
+void SingleVolumeBrickVT::render(const Scene& scene)
 {
     renderProgram.use();
     

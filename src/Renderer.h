@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <data/AppState.h>
+#include <data/Scene.h>
 #include <visualization/VisualizationTechnique.h>
 
 #include <RenderBase/gl/Program.h>
@@ -16,11 +16,10 @@ class Renderer
 {
     public:
         
-        using VTArray = std::vector<std::shared_ptr<VisualizationTechnique>>;
-        
         Renderer(VTArray vts);
         
-        void render(const AppState& appState);
+        void prepare(const Scene& scene);
+        void render(const Scene& scene);
         
     private:
         VTArray vts;

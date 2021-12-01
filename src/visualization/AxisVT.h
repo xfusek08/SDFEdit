@@ -6,13 +6,16 @@
 #include <RenderBase/gl/Buffer.h>
 #include <RenderBase/gl/VertexArray.h>
 
+// this VT draws axis and it is static so it does not need scene at all
+// In the future with proper ECS and rendering pipeline it will be axis entity which will use colored lines VT?
+
 class AxisVT : public VisualizationTechnique
 {
     public:
         AxisVT();
         
-        void prepare(const AppState& appState) override;
-        void render(const AppState& appState) override;
+        void prepare(const Scene& scene) override;
+        void render(const Scene& scene) override;
 
     private:
         rb::gl::Program program;

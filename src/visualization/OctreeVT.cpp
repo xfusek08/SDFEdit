@@ -36,13 +36,13 @@ OctreeVT::OctreeVT() :
 {
 }
 
-void OctreeVT::prepare(const AppState& appState)
+void OctreeVT::prepare(const Scene& scene)
 {
     if (!prepared) {
         prepared = true;
         
         // load list of edits on to GPU
-        const Geometry& geometry = appState.geometryPool->getItem(0);
+        auto geometry = scene.geometryPool[0];
         
         // initial constant settings -> TODO: set this via gui
         const uint32 maxSubdivisions     = 5;
@@ -52,7 +52,7 @@ void OctreeVT::prepare(const AppState& appState)
         const uint32 brickSize           = 8;
         const uint32 brickInOneDimension = 64;           // lets have 3d texture holding 64 x 64 x 64 bricks (512^3 voxels)
         const uint32 maximalBrickCount   = 64 * 64 * 64; // 262144 bricks - no additional bricks will be allocated
-        const glm::vec4 correctionVector = glm::vec4(geometry.getAABB().center(), geometry.getAABB().longestEdgeSize()); // shift and scale SVO to be aligned with BB of the geometry
+        const glm::vec4 correctionVector = glm::vec4(geometry->getAABB().center(), geometry->getAABB().longestEdgeSize()); // shift and scale SVO to be aligned with BB of the geometry
         
         
         // 3d texture for nodes preparation:
@@ -104,7 +104,7 @@ void OctreeVT::prepare(const AppState& appState)
         };
             
         std::vector<Edit> editsData;
-        for (auto e : geometry.getEdits()) {
+        for (auto e : geometry->getEdits()) {
             editsData.push_back({
                 e.primitiveType,
                 e.operation,
@@ -199,7 +199,7 @@ void OctreeVT::prepare(const AppState& appState)
             octreeEvaluationProgram.use();
             octreeEvaluationProgram.uniform("levelBeginIndex", currentLevelBeginIndex);
             octreeEvaluationProgram.uniform("currentLevel", currentLevel);
-            octreeEvaluationProgram.uniform("editCount", uint32(geometry.getEdits().size()));
+            octreeEvaluationProgram.uniform("editCount", uint32(geometry->getEdits().size()));
 
             // one brick evaluated in one workgroup per tile
             RB_DEBUG("Evaluating " << nodesInCurrentLevel << " bricks at level " << currentLevel);
@@ -288,14 +288,14 @@ void OctreeVT::prepare(const AppState& appState)
     }
     
     // camera update
-    auto cam = appState.cameraController->getCamera();
+    auto cam = scene.cameraController->getCamera();
     if (cam.dirtyFlag) {
         octreeWireFrameProgram.loadStandardCamera(cam);
         brickRenderProgram.loadStandardCamera(cam);
     }
 }
 
-void OctreeVT::render(const AppState& appState)
+void OctreeVT::render(const Scene& scene)
 {
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);

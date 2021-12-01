@@ -1,5 +1,5 @@
 
-#include <data/AppState.h>
+#include <data/Scene.h>
 #include <data/primitives.h>
 
 #include <RenderBase/tools/random.h>
@@ -9,8 +9,12 @@
 #include <visualization/OctreeVT.h>
 #include <visualization/AxisVT.h>
 
-#include <updater.h>
-#include <renderer.h>
+#include <systems/GeometryEvaluator.h>
+
+#include <Updater.h>
+#include <Renderer.h>
+
+#include <Renderer.h>
 
 using namespace std;
 using namespace rb;
@@ -19,9 +23,8 @@ class Application : public app::BasicOpenGLApplication
 {
     using BasicOpenGLApplication::BasicOpenGLApplication;
     
-    unique_ptr<AppState>          appState;
-    unique_ptr<AppStateUpdater>   updater;
-    
+    shared_ptr<Scene>    scene;
+    unique_ptr<Updater>  updater;
     unique_ptr<Renderer> renderer;
     
     bool init() override
@@ -29,11 +32,15 @@ class Application : public app::BasicOpenGLApplication
         // App general settings
         // --------------------
         
-        appState = make_unique<AppState>();
-        updater  = make_unique<AppStateUpdater>();
-        renderer = make_unique<Renderer>(Renderer::VTArray{
+        scene = make_shared<Scene>();
+        
+        updater = make_unique<Updater>(SystemArray{
+            make_shared<GeometryEvaluator>(),
+        });
+        
+        renderer = make_unique<Renderer>(VTArray{
             // make_shared<SingleVolumeBrickVT>(),
-            make_shared<OctreeVT>(),
+            // make_shared<OctreeVT>(),
             make_shared<AxisVT>()
         });
         
@@ -42,34 +49,36 @@ class Application : public app::BasicOpenGLApplication
         
         Camera cam = Camera({0, 0, 10});
         cam.setAspectRatio(float(window->getWidth()) / float(window->getHeight()));
-        appState->cameraController = make_unique<OrbitCameraController>(cam);
+        scene->cameraController = make_unique<OrbitCameraController>(cam);
         
         // Preparing the test geometry
         // ----------------------
         
-        appState->geometryPool->addItems({ Geometry(8) });
-        appState->modelPool->addItems({ { 0, Transform() } });
+        auto modelId = scene->modelPool.add(make_shared<Model>(
+            scene->geometryPool.add(make_shared<Geometry>(8))
+        ));
         
-        // appState->geometryPool->getItem(0).addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 0.5));
-        // appState->geometryPool->getItem(0).addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({1,2,0}), 0.3));
+        auto geometry = scene->getModelGeometry(modelId);
+        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 0.5));
         
-        glm::vec3 min = glm::vec3{-10, -10, -10};
-        glm::vec3 max = glm::vec3{10, 10, 10};
-        for (int i = 0; i < 100; ++i) {
-            appState->geometryPool->getItem(0).addEdit(
-                primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.01, 1.5))
-            );
-        }
+        
+        // glm::vec3 min = glm::vec3{-10, -10, -10};
+        // glm::vec3 max = glm::vec3{10, 10, 10};
+        // for (int i = 0; i < 100; ++i) {
+        //     geometry->.addEdit(
+        //         primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.01, 1.5))
+        //     );
+        // }
         
         return true;
     }
-
-    void draw() override
-    {
-        renderer->render(*appState);
-        appState->cameraController->getCamera().dirtyFlag = false;
-    }
     
+    bool onResize(uint32 newWidth, uint32 newHeight) override
+    {
+        scene->cameraController->getCamera().setAspectRatio(float32(newWidth) / float32(newHeight));
+        return false;
+    }
+
     bool onInputChange(const input::InputState& input, const timing::TimeStep& tick) override
     {
         if (input.isKeyPressed(GLFW_KEY_ESCAPE)) {
@@ -77,20 +86,21 @@ class Application : public app::BasicOpenGLApplication
             return true;
         }
         
-        appState = updater->onInputChanged(move(appState), input, tick);
+        updater->onInputChange(scene, input, tick);
         return false;
     }
 
     bool onTick(const input::InputState& input, const timing::TimeStep& tick) override
     {
-        appState = updater->onTick(move(appState), input, tick);
+        updater->onTick(scene, input, tick);
         return false;
     }
 
-    bool onResize(uint32 newWidth, uint32 newHeight) override
+    void draw() override
     {
-        appState->cameraController->getCamera().setAspectRatio(float32(newWidth) / float32(newHeight));
-        return false;
+        renderer->prepare(*scene);
+        renderer->render(*scene);
+        scene->cameraController->getCamera().dirtyFlag = false;
     }
 };
 

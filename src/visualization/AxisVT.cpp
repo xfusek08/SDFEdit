@@ -44,18 +44,22 @@ AxisVT::AxisVT() :
     program.uniform("scaleFactor", 10);
 }
 
-void AxisVT::prepare(const AppState& appState)
+void AxisVT::prepare(const Scene& scene)
 {
     // camera update
-    auto cam = appState.cameraController->getCamera();
+    auto cam = scene.cameraController->getCamera();
     if (cam.dirtyFlag) {
         program.loadStandardCamera(cam);
     }
 }
 
-void AxisVT::render(const AppState& appState)
+void AxisVT::render(const Scene& scene)
 {
+    glEnable(GL_DEPTH_TEST);
+    
     program.use();
     vertexArray->bind();
     glDrawArrays(GL_LINES, 0, indexBuffer->getSize());
+    
+    glDisable(GL_DEPTH_TEST);
 }

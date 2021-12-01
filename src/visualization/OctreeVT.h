@@ -18,8 +18,8 @@ class OctreeVT : public VisualizationTechnique
     public:
         
         OctreeVT();
-        void prepare(const AppState& appState) override;
-        void render(const AppState& appState) override;
+        void prepare(const Scene& scene) override;
+        void render(const Scene& scene) override;
         
     private:
         rb::gl::Program octreeWireFrameProgram;
