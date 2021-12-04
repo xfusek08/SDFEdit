@@ -15,7 +15,6 @@ struct Scene
     
     ModelPool    modelPool;
     GeometryPool geometryPool;
-    BrickPool    brickPool;
     
     // helper functions
     inline std::shared_ptr<Geometry> getModelGeometry(ModelPool::ID modelId) { return geometryPool[modelPool[modelId]->geometryId]; }

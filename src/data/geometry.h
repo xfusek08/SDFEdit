@@ -55,10 +55,9 @@ struct Geometry {
      */
     glm::u32 resolution;
     
-    std::shared_ptr<SVOctree> evaluatedGeometry = nullptr;
+    std::shared_ptr<SVOctree> octree = nullptr;
     
     bool dirty = true;
-    
         
     Geometry(glm::f32 resolution = DEFAULT_GEOMETRY_RESOLUTION) : resolution(resolution) {}
     

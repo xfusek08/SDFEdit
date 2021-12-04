@@ -8,6 +8,7 @@
 #include <visualization/SingleVolumeBrickVT.h>
 #include <visualization/OctreeVT.h>
 #include <visualization/AxisVT.h>
+#include <visualization/OctreeWireframeVT.h>
 
 #include <systems/GeometryEvaluator.h>
 
@@ -41,7 +42,8 @@ class Application : public app::BasicOpenGLApplication
         renderer = make_unique<Renderer>(VTArray{
             // make_shared<SingleVolumeBrickVT>(),
             // make_shared<OctreeVT>(),
-            make_shared<AxisVT>()
+            make_shared<OctreeWireframeVT>(),
+            make_shared<AxisVT>(),
         });
         
         // Camera Set up
@@ -70,6 +72,8 @@ class Application : public app::BasicOpenGLApplication
         //     );
         // }
         
+        updater->init(scene);
+        renderer->init(scene);
         return true;
     }
     

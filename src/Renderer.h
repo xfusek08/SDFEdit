@@ -18,6 +18,7 @@ class Renderer
         
         Renderer(VTArray vts);
         
+        void init(std::shared_ptr<Scene> scene);
         void prepare(const Scene& scene);
         void render(const Scene& scene);
         

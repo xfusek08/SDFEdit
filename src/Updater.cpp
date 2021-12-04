@@ -8,7 +8,14 @@
 using namespace std;
 using namespace rb;
 
-void Updater::onInputChange(std::shared_ptr<Scene> scene, const input::InputState& input, const timing::TimeStep& tick)
+void Updater::init(shared_ptr<Scene> scene)
+{
+    for (auto& system : systems) {
+        system->init(scene);
+    }
+}
+
+void Updater::onInputChange(shared_ptr<Scene> scene, const input::InputState& input, const timing::TimeStep& tick)
 {
     // TODO: for each updatable item ins scene:
     
@@ -23,7 +30,7 @@ void Updater::onInputChange(std::shared_ptr<Scene> scene, const input::InputStat
     }
 }
 
-void Updater::onTick(std::shared_ptr<Scene> scene, const input::InputState& input, const timing::TimeStep& tick)
+void Updater::onTick(shared_ptr<Scene> scene, const input::InputState& input, const timing::TimeStep& tick)
 {
     // TODO: for each updatable item ins scene:
     scene->cameraController->onTick(input, tick);

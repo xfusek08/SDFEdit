@@ -2,7 +2,9 @@
 
 #line 3
 
+
 // Static settings
+// ---------------
 
 // BRANCHING_FACTOR macro could defined from the outside
 #ifndef BRANCHING_FACTOR
@@ -34,19 +36,20 @@
 
 #define PRIMITIVE_SPHERE 0
 
-// shader implementation
-// ----------------------
+
+// Shader data
+// ------------
 
 layout(local_size_x = BRICK_SIDE_LENGTH, local_size_y = BRICK_SIDE_LENGTH, local_size_z = BRICK_SIDE_LENGTH) in;
 
 // node pool
 layout(binding = 0, offset = 0) uniform atomic_uint nodeCount;
 layout(std430, binding = 1) buffer NodePool { uint nodes[]; };
-layout(std430, binding = 2) buffer Position { vec4 nodeVertices[]; };
-layout(std430, binding = 4) buffer brickHelperBuffer { vec4 brick[]; };
+layout(std430, binding = 2) buffer NodeDataPool { uint nodeData[]; };
+layout(std430, binding = 3) buffer VertexBuffer { vec4 nodeVertices[]; };
+
 uniform uint levelBeginIndex;
-uniform uint currentLevel;
-uniform uint maxSubdivisions;
+uniform uint allowSubdivision;
 
 // brick pool
 layout(binding = 0, offset = 4) uniform atomic_uint brickCount;
@@ -63,14 +66,17 @@ struct Edit {
     float padding2;
     vec4 data;
 };
-layout(std430, binding = 3) buffer Input { Edit edits[]; };
+layout(std430, binding = 4) buffer Input { Edit edits[]; };
 uniform uint editCount;
 uniform vec4 correctionVector;
 
 shared uint divide; // place in group-shared memory into which voting whenever node will be subdivided will take place.
 shared uint brickIndex;
 
-// functions
+
+// Shader implementation
+// ---------------------
+
 uint newNode(uint tileIndex, uint flags) {
     return (tileIndex & CHILD_POINTER_MASK) | (flags & NODE_FLAGS_MASK);
 }
@@ -112,14 +118,18 @@ void main() {
     //     brick[gl_LocalInvocationIndex] = vec4(correctionVector.xyz, sdfValue);
     // }
     
+    
+    
     // vote if voxel intersects sdf surface
     float voxelSize = halfStep * brickPos.w;
     if (abs(sdfValue) < voxelSize) {
-        atomicOr(divide, 1);
+        atomicAdd(divide, 1);
     }
     memoryBarrierShared(); // wait till all threads in group finish voting
     
-    // If division was voted all thread will enter this branch
+    nodeData[nodeIndex] = divide;
+    
+    // If division was voted all threads will enter this branch
     //   - In this branch will be saved evaluated volume as new brick
     if (divide != 0) {
         
@@ -138,17 +148,17 @@ void main() {
         
         uvec3 voxelCoord = 8 * brickCoords + gl_LocalInvocationID;
         
-        imageStore(brickPoolTexture, ivec3(voxelCoord), vec4(sdfValue, 0, 0, 0));
+        // imageStore(brickPoolTexture, ivec3(voxelCoord), vec4(sdfValue, 0, 0, 0));
+        
+        // TODO: store brick coords in the node data
         
         // memoryBarrierImage(); // wait till brick is written to
-    }
-    
-    
-    // I am fist thread in the group and will divide this node if divide vote ended positive
-    if (gl_LocalInvocationIndex == 0) {
-        if (currentLevel < maxSubdivisions && divide > 0) {
-            uint newTileFirstNodeIndex = atomicCounterAdd(nodeCount, NODES_PER_TILE); // spawn tile
+        // I am fist thread in the group and will divide this node
+        if (gl_LocalInvocationIndex == 0 && allowSubdivision != 0) {
+            uint newTileFirstNodeIndex = atomicCounterAdd(nodeCount, NODES_PER_TILE);            // spawn tile
             nodes[nodeIndex] = newNode(NODE_TO_TILE(newTileFirstNodeIndex), SUBDIVIDE_THIS_BIT); // link this node to its newly created child and keep its flags
         }
+    } else {
+        // TODO: calculate fullness/emptyness?
     }
 }

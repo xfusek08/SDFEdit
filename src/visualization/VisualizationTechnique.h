@@ -6,7 +6,8 @@
 class VisualizationTechnique
 {
     public:
-        virtual void prepare(const Scene& scene) = 0;
+        virtual void init(std::shared_ptr<Scene> scene) {}
+        virtual void prepare(const Scene& scene) {}
         virtual void render(const Scene& scene) = 0;
 };
 

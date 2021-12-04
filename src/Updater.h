@@ -12,6 +12,7 @@ class Updater
         Updater(SystemArray systems) :
             systems(systems) {}
             
+        void init(std::shared_ptr<Scene> scene);
         void onInputChange(std::shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick);
         void onTick(std::shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick);
         

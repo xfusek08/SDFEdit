@@ -17,9 +17,9 @@
 layout(local_size_x = BRANCHING_FACTOR, local_size_y = BRANCHING_FACTOR, local_size_z = BRANCHING_FACTOR) in;
 
 // node pool
-layout(binding = 0, offset = 0) uniform atomic_uint nodeCount;
-layout(std430, binding = 1) buffer NodePool { uint nodes[]; };
-layout(std430, binding = 2) buffer Position { vec4 nodeVertices[]; };
+layout(std430, binding = 1) buffer NodePool     { uint nodes[]; };
+layout(std430, binding = 2) buffer NodeDataPool { uint nodeData[]; };
+layout(std430, binding = 3) buffer VertexBuffer { vec4 nodeVertices[]; };
 
 uniform uint levelBeginIndex;
 uniform uint initRootTile;
@@ -58,7 +58,7 @@ void main() {
     
     // zero the child
     nodes[childIndex] = 0;
-    // return;
+    nodeData[childIndex] = 0;
     
     // integer operations to utilize integer division using bit shifts (all dividers are powers of 2)
     ivec3 branchCoefficients  = ivec3(gl_LocalInvocationID) - (BRANCHING_FACTOR / 2);

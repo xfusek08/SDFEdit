@@ -102,7 +102,6 @@ void OctreeVT::prepare(const Scene& scene)
             float     _padding2;
             glm::vec4 data;
         };
-            
         std::vector<Edit> editsData;
         for (auto e : geometry->getEdits()) {
             editsData.push_back({
