@@ -66,26 +66,27 @@ SVOctree::Level* SVOctree::initFirstLevel()
         RB_DEBUG("  Allocated:    " << allocated);
         RB_DEBUG("  Depth:        " << getDepth());
         RB_DEBUG("  Levels:");
-        for (auto level : levels) {
+        for (auto i = levels.begin(); i != std::prev(levels.end()); ++i){
+            auto level = *i;
             RB_DEBUG("    " << level.depth << ": ");
             RB_DEBUG("      Start node:  " << level.startNode);
             RB_DEBUG("      End node:    " << level.startNode + level.nodeCount);
             RB_DEBUG("      Node count:  " << level.nodeCount);
             RB_DEBUG("      Brick count: " << level.bricksInLevel);
-        }
         
-        RB_DEBUG("  Tiles:");
-        for (int tileIndex = 0; tileIndex < (nodeCount / getNodesPerTile()); ++tileIndex) {
-            RB_DEBUG("    Tile: " << tileIndex);
-            for (int localIndex = 0; localIndex < getNodesPerTile(); ++localIndex) {
-                int i = tileIndex * getNodesPerTile() + localIndex;
-                RB_DEBUG("      (" << i << ") " << localIndex << ":  " <<
-                    ((nodes[i] & 0x80000000) ? "1" : "0") <<
-                    " | " <<((nodes[i] & 0x40000000) ? "1" : "0") <<
-                    " | " << (nodes[i] & 0x3FFFFFFF) <<
-                    "   " << nodeData[i] <<
-                    "   " << glm::to_string(verticies[i])
-                );
+            RB_DEBUG("      Tiles:");
+            for (int tileIndex = level.startNode / getNodesPerTile(); tileIndex < ((level.startNode + level.nodeCount) / getNodesPerTile()); ++tileIndex) {
+                RB_DEBUG("        Tile: " << tileIndex);
+                for (int localIndex = 0; localIndex < getNodesPerTile(); ++localIndex) {
+                    int i = tileIndex * getNodesPerTile() + localIndex;
+                    RB_DEBUG("          (" << i << ") " << localIndex << ":  " <<
+                        ((nodes[i] & 0x80000000) ? "1" : "0") <<
+                        " | " <<((nodes[i] & 0x40000000) ? "1" : "0") <<
+                        " | " << (nodes[i] & 0x3FFFFFFF) <<
+                        "   " << nodeData[i] <<
+                        "   " << glm::to_string(verticies[i])
+                    );
+                }
             }
         }
         RB_DEBUG(" ");

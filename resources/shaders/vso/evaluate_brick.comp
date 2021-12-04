@@ -127,8 +127,6 @@ void main() {
     }
     memoryBarrierShared(); // wait till all threads in group finish voting
     
-    nodeData[nodeIndex] = divide;
-    
     // If division was voted all threads will enter this branch
     //   - In this branch will be saved evaluated volume as new brick
     if (divide != 0) {
@@ -150,13 +148,12 @@ void main() {
         
         // imageStore(brickPoolTexture, ivec3(voxelCoord), vec4(sdfValue, 0, 0, 0));
         
-        // TODO: store brick coords in the node data
-        
         // memoryBarrierImage(); // wait till brick is written to
         // I am fist thread in the group and will divide this node
         if (gl_LocalInvocationIndex == 0 && allowSubdivision != 0) {
             uint newTileFirstNodeIndex = atomicCounterAdd(nodeCount, NODES_PER_TILE);            // spawn tile
             nodes[nodeIndex] = newNode(NODE_TO_TILE(newTileFirstNodeIndex), SUBDIVIDE_THIS_BIT); // link this node to its newly created child and keep its flags
+            nodeData[nodeIndex] = brickIndex; // TODO: store 3d coordinates?
         }
     } else {
         // TODO: calculate fullness/emptyness?

@@ -105,7 +105,7 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     glDispatchCompute(1, 1, 1); // dispatch one workgroup for root tile
     octreeInitiationProgram.uniform("initRootTile", 0u); // all following dispatches will be general for current level
     
-    // octree->debugPrint();
+    octree->debugPrint();
 
     do {
         
@@ -165,11 +165,11 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
         nextLevel.depth = currentLevel->depth + 1;
         currentLevel = octree->addLevel(nextLevel);
         
-        // octree->debugPrint();
+        octree->debugPrint();
         
     } while(true); // no new nodes means algorithm is finished
     
-    // octree->debugPrint();
+    octree->debugPrint();
         
     // save evaluated octree to the geometry
     return octree;
