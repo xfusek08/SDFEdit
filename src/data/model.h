@@ -5,17 +5,15 @@
 #include <data/geometry.h>
 
 #include <RenderBase/defines.h>
-#include <RenderBase/ds/Pool.h>
 
 struct Model {
     
-    Model(GeometryPool::ID geometryId, Transform transform = Transform()) :
-        geometryId(geometryId), transform(transform) { }
+    std::shared_ptr<Geometry> geometry;
+    Transform transform;
+    bool dirty;
     
-    Transform        transform;
-    GeometryPool::ID geometryId;
-    
-    // TODO: additional model properties which might be used in shading
+    Model(std::shared_ptr<Geometry> geometry, Transform transform = Transform()) :
+        geometry(geometry),
+        transform(transform)
+    {}
 };
-
-using ModelPool = rb::ds::Pool<Model>;

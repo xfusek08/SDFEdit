@@ -26,7 +26,7 @@ void SingleVolumeBrickVT::prepare(const Scene& scene)
     // Choose geometry to evaluate onto GPU
     // ------------------------------------
     
-    auto geometry = scene.geometryPool[0];
+    auto geometry = scene.models[0].geometry;
     if (geometry->dirty) {
         
         // Compute basic metadata about bounding voxelized volume (shader uniforms)

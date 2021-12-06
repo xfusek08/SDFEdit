@@ -3,6 +3,8 @@
 
 #include <data/primitives.h>
 
+#include <RenderBase/logging.h>
+
 #include <RenderBase/tools/random.h>
 
 using namespace std;
@@ -36,5 +38,9 @@ void Updater::onTick(shared_ptr<Scene> scene, const input::InputState& input, co
     scene->cameraController->onTick(input, tick);
     for (auto& system : systems) {
         system->onTick(scene, input, tick);
+    }
+    
+    if (tick.order % 60 == 0) {
+        scene->division++;
     }
 }

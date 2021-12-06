@@ -9,6 +9,7 @@
 #include <visualization/OctreeVT.h>
 #include <visualization/AxisVT.h>
 #include <visualization/OctreeWireframeVT.h>
+#include <visualization/ModelVT.h>
 
 #include <systems/GeometryEvaluator.h>
 
@@ -40,9 +41,10 @@ class Application : public app::BasicOpenGLApplication
         });
         
         renderer = make_unique<Renderer>(VTArray{
-            // make_shared<SingleVolumeBrickVT>(),
+            make_shared<SingleVolumeBrickVT>(),
             // make_shared<OctreeVT>(),
-            make_shared<OctreeWireframeVT>(),
+            // make_shared<ModelVT>(),
+            // make_shared<OctreeWireframeVT>(),
             make_shared<AxisVT>(),
         });
         
@@ -56,21 +58,21 @@ class Application : public app::BasicOpenGLApplication
         // Preparing the test geometry
         // ----------------------
         
-        auto modelId = scene->modelPool.add(make_shared<Model>(
-            scene->geometryPool.add(make_shared<Geometry>(8))
-        ));
+        auto geometry = make_shared<Geometry>(8);
+        scene->models.push_back(Model(geometry));
+        // scene->models.push_back(Model(geometry, Transform({4, 4, 4})));
         
-        auto geometry = scene->getModelGeometry(modelId);
-        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 0.5));
+        // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 1.5));
+        // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({1,1,1}), 0.75));
         
         
-        // glm::vec3 min = glm::vec3{-10, -10, -10};
-        // glm::vec3 max = glm::vec3{10, 10, 10};
-        // for (int i = 0; i < 100; ++i) {
-        //     geometry->.addEdit(
-        //         primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.01, 1.5))
-        //     );
-        // }
+        glm::vec3 min = glm::vec3{-10, -10, -10};
+        glm::vec3 max = glm::vec3{10, 10, 10};
+        for (int i = 0; i < 100; ++i) {
+            geometry->addEdit(
+                primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.01, 1.5))
+            );
+        }
         
         updater->init(scene);
         renderer->init(scene);

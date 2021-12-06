@@ -8,6 +8,7 @@
 #include <RenderBase/gl/Buffer.h>
 
 #include <memory>
+#include <unordered_set>
 
 // This class manages pool of evaluated geometries on the gpu
 class GeometryEvaluator : public System
@@ -19,9 +20,13 @@ class GeometryEvaluator : public System
         void onInputChange(std::shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick) override;
         void onTick(std::shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick) override;
         
+        
+        inline void AddToEvaluation(std::shared_ptr<Geometry> geometry) { toEvaluateQueue.insert(geometry); }
+        
     private:
         // evaluator settings
-        uint32 maxSubdivisions = 4;
+        uint32 maxSubdivisions = 5;
+        std::unordered_set<std::shared_ptr<Geometry>> toEvaluateQueue;
         
         // evaluated internal state
         rb::gl::Program octreeEvaluationProgram;
@@ -30,7 +35,7 @@ class GeometryEvaluator : public System
         std::unique_ptr<rb::gl::Buffer> counterBuffer = nullptr;
         
         // internal methods
-        void evaluateScene(std::shared_ptr<Scene> scene) const;
+        void evaluateQueue();
         std::shared_ptr<SVOctree> evaluateGeometry(const Geometry& geometry) const;
         void loadEditBuffer(const Geometry& geometry) const;
 };

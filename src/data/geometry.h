@@ -8,8 +8,6 @@
 #include <RenderBase/defines.h>
 #include <RenderBase/constants.h>
 
-#include <RenderBase/ds/Pool.h>
-
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -79,6 +77,3 @@ struct Geometry {
         // Axis Aligned Bounding Box for the whole geometry, it will be useful when computing origin and aligning volume data.
         AABB aabb = AABB();
 };
-
-using GeometryPool = rb::ds::Pool<Geometry>;
-using GeometryID   = rb::ds::Pool<Geometry>::ID;

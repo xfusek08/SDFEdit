@@ -31,6 +31,9 @@
 #define NODE_FLAGS_MASK    0xC0000000
 #define CHILD_POINTER_MASK 0x3FFFFFFF
 
+#define SOLID_NODE 1
+#define EMPTY_NODE 2
+
 // SDF settings
 #define MAX_DISTANCE     1000000.0
 
@@ -122,7 +125,7 @@ void main() {
     
     // vote if voxel intersects sdf surface
     float voxelSize = halfStep * brickPos.w;
-    if (abs(sdfValue) < voxelSize) {
+    if (abs(sdfValue) < voxelSize * 0.8) {
         atomicAdd(divide, 1);
     }
     memoryBarrierShared(); // wait till all threads in group finish voting
@@ -146,16 +149,21 @@ void main() {
         
         uvec3 voxelCoord = 8 * brickCoords + gl_LocalInvocationID;
         
-        // imageStore(brickPoolTexture, ivec3(voxelCoord), vec4(sdfValue, 0, 0, 0));
+        imageStore(brickPoolTexture, ivec3(voxelCoord), vec4(sdfValue, 0, 0, 0));
         
         // memoryBarrierImage(); // wait till brick is written to
         // I am fist thread in the group and will divide this node
-        if (gl_LocalInvocationIndex == 0 && allowSubdivision != 0) {
-            uint newTileFirstNodeIndex = atomicCounterAdd(nodeCount, NODES_PER_TILE);            // spawn tile
-            nodes[nodeIndex] = newNode(NODE_TO_TILE(newTileFirstNodeIndex), SUBDIVIDE_THIS_BIT); // link this node to its newly created child and keep its flags
+        if (gl_LocalInvocationIndex == 0 ) {
             nodeData[nodeIndex] = brickIndex; // TODO: store 3d coordinates?
+            if (allowSubdivision != 0) {
+                uint newTileFirstNodeIndex = atomicCounterAdd(nodeCount, NODES_PER_TILE);            // spawn tile
+                nodes[nodeIndex] = newNode(NODE_TO_TILE(newTileFirstNodeIndex), SUBDIVIDE_THIS_BIT); // link this node to its newly created child and keep its flags
+            }
         }
     } else {
-        // TODO: calculate fullness/emptyness?
+        if (gl_LocalInvocationIndex == 0 ) {
+            // TODO: calculate fullness/emptyness?
+            nodeData[nodeIndex] = (sdfValue < 0) ? SOLID_NODE : EMPTY_NODE;
+        }
     }
 }

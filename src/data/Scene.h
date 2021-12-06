@@ -12,10 +12,7 @@
 struct Scene
 {
     std::unique_ptr<rb::CameraController> cameraController;
-    
-    ModelPool    modelPool;
-    GeometryPool geometryPool;
-    
-    // helper functions
-    inline std::shared_ptr<Geometry> getModelGeometry(ModelPool::ID modelId) { return geometryPool[modelPool[modelId]->geometryId]; }
+    std::vector<Model> models;
+    bool dirty;
+    uint32 division = 0;
 };

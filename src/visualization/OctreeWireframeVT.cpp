@@ -25,6 +25,7 @@ void OctreeWireframeVT::prepare(const Scene& scene)
 
 void OctreeWireframeVT::render(const Scene& scene)
 {
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -33,7 +34,7 @@ void OctreeWireframeVT::render(const Scene& scene)
     
     // NOTE: renders first geometry
     
-    const auto geometry = scene.geometryPool[0];
+    const auto geometry = scene.models[0].geometry;
     vertexArray->bind();
     vertexArray->addAttrib(*(geometry->octree->vertexBuffer), 0, 4, GL_FLOAT);
     glDrawArrays(GL_POINTS, 0, geometry->octree->nodeCount);

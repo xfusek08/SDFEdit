@@ -1,6 +1,8 @@
 
 #include <systems/GeometryEvaluator.h>
 
+#include <unordered_set>
+
 using namespace std;
 using namespace rb;
 
@@ -34,29 +36,28 @@ GeometryEvaluator::GeometryEvaluator() :
 
 void GeometryEvaluator::init(std::shared_ptr<Scene> scene)
 {
+    for (const auto& model : scene->models) {
+        AddToEvaluation(model.geometry);
+    }
 }
 
 void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
 {
-    evaluateScene(scene);
 }
 
 void GeometryEvaluator::onTick(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
 {
-    // geometry propably won't be animated
-    // uncomment of geometry could't change in time update cycle
-    evaluateScene(scene);
+    evaluateQueue();
 }
 
-void GeometryEvaluator::evaluateScene(shared_ptr<Scene> scene) const
+void GeometryEvaluator::evaluateQueue()
 {
-    for (auto geometry : scene->geometryPool) {
-        if (geometry != nullptr && geometry->dirty) {
-            geometry->octree = evaluateGeometry(*geometry);
-            geometry->dirty  = false;
-        }
+    for (auto geometry : toEvaluateQueue) {
+        geometry->octree = evaluateGeometry(*geometry);
     }
+    toEvaluateQueue.clear();
 }
+
 std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& geometry) const
 {
     // prepare data and buffers for shaders and the algorithm
@@ -105,7 +106,7 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     glDispatchCompute(1, 1, 1); // dispatch one workgroup for root tile
     octreeInitiationProgram.uniform("initRootTile", 0u); // all following dispatches will be general for current level
     
-    octree->debugPrint();
+    // octree->debugPrint();
 
     do {
         
@@ -165,11 +166,13 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
         nextLevel.depth = currentLevel->depth + 1;
         currentLevel = octree->addLevel(nextLevel);
         
-        octree->debugPrint();
+        // octree->debugPrint();
         
     } while(true); // no new nodes means algorithm is finished
     
-    octree->debugPrint();
+    // octree->debugPrint();
+    
+    RB_DEBUG("GEometry evaluated into: " << octree->nodeCount << " nodes");
         
     // save evaluated octree to the geometry
     return octree;

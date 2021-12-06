@@ -42,7 +42,7 @@ void OctreeVT::prepare(const Scene& scene)
         prepared = true;
         
         // load list of edits on to GPU
-        auto geometry = scene.geometryPool[0];
+        auto geometry = scene.models[0].geometry;
         
         // initial constant settings -> TODO: set this via gui
         const uint32 maxSubdivisions     = 5;
