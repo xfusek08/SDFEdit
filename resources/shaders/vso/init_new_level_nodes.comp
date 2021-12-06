@@ -27,7 +27,7 @@ uniform vec4 correctionVector;
 
 void main() {
     
-    // Common preparation for while workgroup
+    // Common preparation for whole workgroup
     // --------------------------------------
     
     // get current node: each node is precessed by one workgroup with thread for each child

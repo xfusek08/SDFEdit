@@ -30,6 +30,10 @@ void Updater::onInputChange(shared_ptr<Scene> scene, const input::InputState& in
     for (auto& system : systems) {
         system->onInputChange(scene, input, tick);
     }
+    
+    if (input.isKeyPressed(GLFW_KEY_SPACE)) {
+        scene->division++;
+    }
 }
 
 void Updater::onTick(shared_ptr<Scene> scene, const input::InputState& input, const timing::TimeStep& tick)
@@ -40,7 +44,7 @@ void Updater::onTick(shared_ptr<Scene> scene, const input::InputState& input, co
         system->onTick(scene, input, tick);
     }
     
-    if (tick.order % 60 == 0) {
-        scene->division++;
-    }
+    // if (tick.order % 60 == 0) {
+    //     scene->division++;
+    // }
 }

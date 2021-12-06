@@ -125,7 +125,7 @@ void main() {
     
     // vote if voxel intersects sdf surface
     float voxelSize = halfStep * brickPos.w;
-    if (abs(sdfValue) < voxelSize * 0.8) {
+    if (abs(sdfValue) < voxelSize * 0.5) {
         atomicAdd(divide, 1);
     }
     memoryBarrierShared(); // wait till all threads in group finish voting
@@ -162,7 +162,6 @@ void main() {
         }
     } else {
         if (gl_LocalInvocationIndex == 0 ) {
-            // TODO: calculate fullness/emptyness?
             nodeData[nodeIndex] = (sdfValue < 0) ? SOLID_NODE : EMPTY_NODE;
         }
     }

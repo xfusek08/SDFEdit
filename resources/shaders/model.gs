@@ -33,16 +33,14 @@ void main() {
     vec3  translate = gl_in[0].gl_Position.xyz;
     float scale     = gl_in[0].gl_Position.w;
     
-    vec4  nodeVertex = nodeVertices[nodeIndex[0]];
-    vec3  position   = nodeVertex.xyz + translate;
-    float d          = nodeVertex.w * 0.5 * scale;
-    
-    vec3 finalPos;
+    vec4  nodeVertex    = nodeVertices[nodeIndex[0]];
+    vec3  nodePos       = nodeVertex.xyz;
+    vec3  translatedPos = nodePos + translate;
+    float d             = nodeVertex.w * 0.485 * scale;
     
     #define EMIT_STRIP_VERTEX(shift) \
-        finalPos    = position + shift; \
-        fragPos     = finalPos; \
-        gl_Position = viewProjection * vec4(finalPos, 1); \
+        fragPos     = nodePos + shift; \
+        gl_Position = viewProjection * vec4(translatedPos + shift, 1); \
         EmitVertex()
     
     EMIT_STRIP_VERTEX( BDL(d) );
