@@ -43,6 +43,9 @@ void GeometryEvaluator::init(std::shared_ptr<Scene> scene)
 
 void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
 {
+    if (input.isKeyPressed(GLFW_KEY_R)) {
+        init(scene);
+    }
 }
 
 void GeometryEvaluator::onTick(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
@@ -94,6 +97,18 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     // Run evaluation algorithm
     // -------------------------
     
+    auto resizeBuffer = [](gl::Buffer& buffer, uint32 requestedSize) {
+        uint32 origSize = buffer.getSize();
+        uint32 newSize = origSize;
+        while(requestedSize > newSize) {
+            newSize *= 1.5;
+        }
+        if (newSize != origSize) {
+            RB_DEBUG("Buffer " << buffer.getGlID() << " reallocation: " << origSize << "->" << newSize);
+            buffer.resize(newSize);
+        }
+    };
+    
     // octree->debugPrint();
     
     // 1. Run init kernel to initialize root tile:
@@ -107,7 +122,7 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     octreeInitiationProgram.uniform("initRootTile", 0u); // all following dispatches will be general for current level
     
     // octree->debugPrint();
-
+    
     do {
         
         // 2. Run evaluation kernel
@@ -126,6 +141,7 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
         octreeEvaluationProgram.uniform("allowSubdivision", uint32(currentLevel->depth < maxSubdivisions));
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT); // wait till previous initializedion kernel finishes writing values.
         octreeEvaluationProgram.use();
+        RB_DEBUG("Dispatching evaluation compute: " << currentLevel->nodeCount);
         glDispatchCompute(currentLevel->nodeCount, 1, 1);
         
         // 2.2. Retrieve values from atomic counters and calculate differences
@@ -144,6 +160,10 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
         SVOctree::Level nextLevel = {};
         nextLevel.startNode = (currentLevel->startNode + currentLevel->nodeCount);
         nextLevel.nodeCount = octree->nodeCount - nextLevel.startNode;
+        
+        resizeBuffer(*octree->nodeBuffer, sizeof(uint32) * octree->nodeCount);
+        resizeBuffer(*octree->nodeDataBuffer, sizeof(uint32) * octree->nodeCount);
+        resizeBuffer(*octree->vertexBuffer, sizeof(glm::vec4) * octree->nodeCount);
                 
         // octree->debugPrint();
         
@@ -171,9 +191,10 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     } while(true); // no new nodes means algorithm is finished
     
     // octree->debugPrint();
+    // octree->debugPrintLevels();
     
-    RB_DEBUG("GEometry evaluated into: " << octree->nodeCount << " nodes");
-        
+    RB_DEBUG("Geometry evaluated into: " << octree->nodeCount << " nodes and " << octree->brickPool->brickCount << " bricks");
+    
     // save evaluated octree to the geometry
     return octree;
 }

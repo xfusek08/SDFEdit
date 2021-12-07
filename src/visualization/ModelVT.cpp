@@ -68,8 +68,12 @@ void ModelVT::prepare(const Scene& scene)
         // add nodes to be rendered ino
         if (batch.vao == nullptr) {
             batch.vao = make_unique<gl::VertexArray>();
+        
             batch.translationBuffer = make_unique<gl::Buffer>(batch.translations, GL_DYNAMIC_DRAW);
             batch.toRenderNodesBuffer = make_unique<gl::Buffer>(batch.toRenderNodes, GL_DYNAMIC_DRAW);
+            
+            batch.vao->addAttrib(*batch.toRenderNodesBuffer, 0, 1, GL_UNSIGNED_INT, 2);
+            batch.vao->addAttrib(*batch.toRenderNodesBuffer, 1, 1, GL_UNSIGNED_INT, 2, 4);
         } else {
             batch.translationBuffer->setData(batch.translations);
             batch.toRenderNodesBuffer->setData(batch.toRenderNodes);
@@ -90,11 +94,9 @@ void ModelVT::render(const Scene& scene)
         geometryPrt->octree->nodeBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 1);
         geometryPrt->octree->nodeDataBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 2);
         geometryPrt->octree->vertexBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 3);
+        geometryPrt->octree->brickPool->bind();
         
         renderProgram.uniform("TranslationsBlock", *batch.translationBuffer, 4);
-        
-        batch.vao->addAttrib(*batch.toRenderNodesBuffer, 0, 1, GL_UNSIGNED_INT, 2);
-        batch.vao->addAttrib(*batch.toRenderNodesBuffer, 1, 1, GL_UNSIGNED_INT, 2, 4);
         
         batch.vao->bind();
         glDrawArrays(GL_POINTS, 0, batch.toRenderNodes.size());

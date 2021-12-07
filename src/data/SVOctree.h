@@ -43,6 +43,7 @@ struct SVOctree {
     
     #ifdef DEBUG
         void debugPrint() const;
+        void debugPrintLevels() const;
     #endif
     
     private:

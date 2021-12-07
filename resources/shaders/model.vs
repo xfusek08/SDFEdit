@@ -8,11 +8,11 @@ layout (location = 1) in uint vertex_transformIndex;
 // world translations uniform buffer block
 layout (std140, binding = 4) uniform TranslationsBlock { vec4 translations[MAX_MODELS]; };
 
-out uint nodeIndex;
+out uint nodeIndexes;
 
 void main()
 {
-    nodeIndex = vertex_nodeIndex;
+    nodeIndexes = vertex_nodeIndex;
     gl_Position = translations[vertex_transformIndex];
     // nodeIndex = gl_VertexID;
     // gl_Position = vec4(0,0,0,1);

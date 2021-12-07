@@ -41,8 +41,6 @@ class Application : public app::BasicOpenGLApplication
         });
         
         renderer = make_unique<Renderer>(VTArray{
-            // make_shared<SingleVolumeBrickVT>(),
-            // make_shared<OctreeVT>(),
             make_shared<ModelVT>(),
             make_shared<OctreeWireframeVT>(),
             make_shared<AxisVT>(),
@@ -60,13 +58,17 @@ class Application : public app::BasicOpenGLApplication
         
         auto geometry = make_shared<Geometry>(8);
         scene->models.push_back(Model(geometry));
-        scene->models.push_back(Model(geometry, Transform({0, 0, 4})));
-        scene->models.push_back(Model(geometry, Transform({0, 0, 8})));
-        scene->models.push_back(Model(geometry, Transform({0, 0, 12})));
+        // scene->models.push_back(Model(geometry, Transform({10, 0, 0 })));
+        // scene->models.push_back(Model(geometry, Transform({20, 0, 0})));
+        // scene->models.push_back(Model(geometry, Transform({30, 0, 0})));
         
         
-        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 1));
-        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({1.5,0,0}), 1));
+        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 0}), 0.5));
+        // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 1.5}), 0.5));
+        // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 2 * 1.5}), 0.5));
+        // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 3 * 1.5}), 0.5));
+        // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 4 * 1.5}), 0.5));
+        // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 5 * 1.5}), 0.5));
         
         
         // glm::vec3 min = glm::vec3{-10, -10, -10};

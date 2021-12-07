@@ -39,6 +39,8 @@
 
 #define PRIMITIVE_SPHERE 0
 
+#define SQRT_3 1.73205080757
+
 
 // Shader data
 // ------------
@@ -95,18 +97,17 @@ void main() {
     if (gl_LocalInvocationIndex == 0) {
         divide = 0; // prepare local memory
     }
-    memoryBarrierShared();
+    barrier();
     
     uint nodeIndex = levelBeginIndex + gl_WorkGroupID.x;
-    vec4 brickPos  = nodeVertices[nodeIndex];
-    
-    // compute center of voxel from center of brick and
+    vec4 nodeVertex  = nodeVertices[nodeIndex];
+   
     ivec3 branchCoefficients = ivec3(gl_LocalInvocationID) - (BRICK_SIDE_LENGTH / 2);
     float fullStep           = 1.0 / float(BRICK_SIDE_LENGTH); // hopefully the only FP division and possibly optimize into multiplication by 0.5, 0.25 etc.
     float halfStep           = fullStep * 0.5;
     vec3  shiftVector        = fullStep * vec3(branchCoefficients) + halfStep;
-    vec3  voxelCenter        = brickPos.w * shiftVector + brickPos.xyz;
-        
+    vec3  voxelCenter        = nodeVertex.w * shiftVector + nodeVertex.xyz;
+    
     // compute distance to the voxel center -> sdfValue
     float sdfValue = MAX_DISTANCE;
     for (int i = 0; i < editCount; ++i) {
@@ -117,18 +118,12 @@ void main() {
         }
     }
     
-    // if (gl_WorkGroupID.x == 6) {
-    //     brick[gl_LocalInvocationIndex] = vec4(correctionVector.xyz, sdfValue);
-    // }
-    
-    
-    
     // vote if voxel intersects sdf surface
-    float voxelSize = halfStep * brickPos.w;
+    float voxelSize = SQRT_3 * (fullStep * nodeVertex.w) * 0.5;
     if (abs(sdfValue) < voxelSize * 0.5) {
         atomicAdd(divide, 1);
     }
-    memoryBarrierShared(); // wait till all threads in group finish voting
+    barrier();
     
     // If division was voted all threads will enter this branch
     //   - In this branch will be saved evaluated volume as new brick
@@ -138,7 +133,7 @@ void main() {
         if (gl_LocalInvocationIndex == 0) {
             brickIndex = atomicCounterIncrement(brickCount);
         }
-        memoryBarrierShared();
+        barrier();
         
         // all threads will find voxel coordinate in brick pool based on the brick index
         uvec3 brickCoords = uvec3(
@@ -150,8 +145,8 @@ void main() {
         uvec3 voxelCoord = 8 * brickCoords + gl_LocalInvocationID;
         
         imageStore(brickPoolTexture, ivec3(voxelCoord), vec4(sdfValue, 0, 0, 0));
+        // memoryBarrierImage(); // this will probably wont be needed
         
-        // memoryBarrierImage(); // wait till brick is written to
         // I am fist thread in the group and will divide this node
         if (gl_LocalInvocationIndex == 0 ) {
             nodeData[nodeIndex] = brickIndex; // TODO: store 3d coordinates?

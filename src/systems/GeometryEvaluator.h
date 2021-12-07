@@ -25,7 +25,7 @@ class GeometryEvaluator : public System
         
     private:
         // evaluator settings
-        uint32 maxSubdivisions = 6;
+        uint32 maxSubdivisions = 5;
         std::unordered_set<std::shared_ptr<Geometry>> toEvaluateQueue;
         
         // evaluated internal state

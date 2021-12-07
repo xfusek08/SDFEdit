@@ -50,6 +50,14 @@ SVOctree::Level* SVOctree::initFirstLevel()
 }
 
 #ifdef DEBUG
+    void printLevel(const SVOctree::Level& level) {
+        RB_DEBUG("    " << level.depth << ": ");
+        RB_DEBUG("      Start node:  " << level.startNode);
+        RB_DEBUG("      End node:    " << level.startNode + level.nodeCount);
+        RB_DEBUG("      Node count:  " << level.nodeCount);
+        RB_DEBUG("      Brick count: " << level.bricksInLevel);
+    }
+    
     void SVOctree::debugPrint() const
     {
         auto nodes     = vector<uint32>(nodeCount, 0u);
@@ -66,13 +74,9 @@ SVOctree::Level* SVOctree::initFirstLevel()
         RB_DEBUG("  Allocated:    " << allocated);
         RB_DEBUG("  Depth:        " << getDepth());
         RB_DEBUG("  Levels:");
-        for (auto i = levels.begin(); i != std::prev(levels.end()); ++i){
-            auto level = *i;
-            RB_DEBUG("    " << level.depth << ": ");
-            RB_DEBUG("      Start node:  " << level.startNode);
-            RB_DEBUG("      End node:    " << level.startNode + level.nodeCount);
-            RB_DEBUG("      Node count:  " << level.nodeCount);
-            RB_DEBUG("      Brick count: " << level.bricksInLevel);
+        for (auto i = levels.begin(); i != levels.end(); ++i){
+            const auto& level = *i;
+            printLevel(level);
         
             RB_DEBUG("      Tiles:");
             for (int tileIndex = level.startNode / getNodesPerTile(); tileIndex < ((level.startNode + level.nodeCount) / getNodesPerTile()); ++tileIndex) {
@@ -91,4 +95,12 @@ SVOctree::Level* SVOctree::initFirstLevel()
         }
         RB_DEBUG(" ");
     }
+    
+    void SVOctree::debugPrintLevels() const
+    {
+        for (const auto& level : levels) {
+            printLevel(level);
+        }
+    }
+    
 #endif

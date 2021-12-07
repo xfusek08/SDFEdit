@@ -40,7 +40,7 @@ void main() {
     // FIRST PRIMITIVE
     #define EMIT_LINE_VERTEX(shift) \
         gl_Position = viewProjection * vec4(position + shift, 1); \
-        vcolor = vec4(clamp(abs((position + shift).xyz) + 0.5, 0.5, 1) , 1);\
+        vcolor = vec4(clamp(abs((position + shift).xyz) + 0.5, 0.5, 1) , 0.5);\
         EmitVertex()
     
     EMIT_LINE_VERTEX( FTL(d) );
