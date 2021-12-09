@@ -57,13 +57,14 @@ class Application : public app::BasicOpenGLApplication
         // ----------------------
         
         auto geometry = make_shared<Geometry>(8);
+        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 0.5));
+        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,1,0}), 0.5));
+        
         scene->models.push_back(Model(geometry));
-        // scene->models.push_back(Model(geometry, Transform({10, 0, 0 })));
-        // scene->models.push_back(Model(geometry, Transform({20, 0, 0})));
-        // scene->models.push_back(Model(geometry, Transform({30, 0, 0})));
+        scene->models.push_back(Model(geometry, Transform({3, 3, 0})));
+        // scene->models.push_back(Model(geometry, Transform({4, 0, 0})));
+        // scene->models.push_back(Model(geometry, Transform({8, 0, 0})));
         
-        
-        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 0}), 0.5));
         // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 1.5}), 0.5));
         // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 2 * 1.5}), 0.5));
         // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0, 3 * 1.5}), 0.5));
@@ -89,7 +90,7 @@ class Application : public app::BasicOpenGLApplication
         scene->cameraController->getCamera().setAspectRatio(float32(newWidth) / float32(newHeight));
         return false;
     }
-
+    
     bool onInputChange(const input::InputState& input, const timing::TimeStep& tick) override
     {
         if (input.isKeyPressed(GLFW_KEY_ESCAPE)) {
@@ -100,13 +101,13 @@ class Application : public app::BasicOpenGLApplication
         updater->onInputChange(scene, input, tick);
         return false;
     }
-
+    
     bool onTick(const input::InputState& input, const timing::TimeStep& tick) override
     {
         updater->onTick(scene, input, tick);
         return false;
     }
-
+    
     void draw() override
     {
         renderer->prepare(*scene);

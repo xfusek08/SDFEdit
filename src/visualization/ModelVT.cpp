@@ -25,6 +25,7 @@ ModelVT::ModelVT()
         make_shared<gl::Shader>(GL_VERTEX_SHADER,   RESOURCE_SHADERS_MODEL_VS),
         make_shared<gl::Shader>(GL_GEOMETRY_SHADER, RESOURCE_SHADERS_MODEL_GS),
         make_shared<gl::Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_MODEL_FS)
+        // make_shared<gl::Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_MODEL_FILL_BRICK_FS)
     )
 {}
 
@@ -36,7 +37,7 @@ void ModelVT::prepare(const Scene& scene)
     }
         
     for (auto& batch : geometryBatches) {
-        batch.second.translations.clear();
+        batch.second.transforms.clear();
         batch.second.toRenderNodes.clear();
     }
     
@@ -54,7 +55,7 @@ void ModelVT::prepare(const Scene& scene)
         
         auto& currentBatch = geometryBatches[key];
         
-        currentBatch.translations.push_back(glm::vec4(model.transform.position, 1)); // reserve w for scaling
+        currentBatch.transforms.push_back(model.transform.getTransform());
         
         // calculate indices of nodes which will be rendered
         auto toRenderIndices = generateToRenderIndices(model, scene.division);
@@ -69,13 +70,13 @@ void ModelVT::prepare(const Scene& scene)
         if (batch.vao == nullptr) {
             batch.vao = make_unique<gl::VertexArray>();
         
-            batch.translationBuffer = make_unique<gl::Buffer>(batch.translations, GL_DYNAMIC_DRAW);
+            batch.transformBuffer = make_unique<gl::Buffer>(batch.transforms, GL_DYNAMIC_DRAW);
             batch.toRenderNodesBuffer = make_unique<gl::Buffer>(batch.toRenderNodes, GL_DYNAMIC_DRAW);
             
             batch.vao->addAttrib(*batch.toRenderNodesBuffer, 0, 1, GL_UNSIGNED_INT, 2);
             batch.vao->addAttrib(*batch.toRenderNodesBuffer, 1, 1, GL_UNSIGNED_INT, 2, 4);
         } else {
-            batch.translationBuffer->setData(batch.translations);
+            batch.transformBuffer->setData(batch.transforms);
             batch.toRenderNodesBuffer->setData(batch.toRenderNodes);
         }
     }
@@ -87,20 +88,20 @@ void ModelVT::render(const Scene& scene)
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     
     renderProgram.use();
     for (auto const& [geometryPrt, batch] : geometryBatches) {
         
+        // attach buffers specific for current geometry/batch
+        batch.vao->bind();
+        renderProgram.uniform("TranslationsBlock", *batch.transformBuffer, 4);
         geometryPrt->octree->nodeBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 1);
         geometryPrt->octree->nodeDataBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 2);
         geometryPrt->octree->vertexBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 3);
         geometryPrt->octree->brickPool->bind();
         
-        renderProgram.uniform("TranslationsBlock", *batch.translationBuffer, 4);
-        
-        batch.vao->bind();
         glDrawArrays(GL_POINTS, 0, batch.toRenderNodes.size());
-        // glDrawArrays(GL_POINTS, 0, 2);
     }
     
     // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

@@ -15,6 +15,18 @@
 #ifndef BRICK_SIDE_LENGTH
     #define BRICK_SIDE_LENGTH 8  // lets have NxNxN bricks
 #endif
+#if BRICK_SIDE_LENGTH == 8
+    // Computation of 3D discrete location of brick in brick atlas texture:
+    //   return uvec3(
+    //       brickIndex % 8,
+    //       (brickIndex / 8) % 8,
+    //       brickIndex / (8 * 8)
+    //   );
+    #define BRICK_INDEX_TO_COORDS(brickIndex) \
+        uvec3(brickIndex & 7, (brickIndex >> 3) & 7, brickIndex >> 6)
+#else
+    #error BRICK_SIDE_LENGTH macro must have value 8 for now
+#endif
 
 #if BRANCHING_FACTOR == 2
     #define NODES_PER_TILE 8
@@ -136,13 +148,8 @@ void main() {
         barrier();
         
         // all threads will find voxel coordinate in brick pool based on the brick index
-        uvec3 brickCoords = uvec3(
-            brickIndex % BricksInOneDimension,
-            (brickIndex / BricksInOneDimension) % BricksInOneDimension,
-            brickIndex / (BricksInOneDimension * BricksInOneDimension)
-        );
-        
-        uvec3 voxelCoord = 8 * brickCoords + gl_LocalInvocationID;
+        uvec3 brickCoords = BRICK_INDEX_TO_COORDS(brickIndex);
+        uvec3 voxelCoord  = 8 * brickCoords + gl_LocalInvocationID;
         
         imageStore(brickPoolTexture, ivec3(voxelCoord), vec4(sdfValue, 0, 0, 0));
         // memoryBarrierImage(); // this will probably wont be needed

@@ -25,11 +25,11 @@ class ModelVT : public VisualizationTechnique
     private:
     
         struct RenderBatchSOA {
-            std::vector<glm::vec4> translations = {};
+            std::vector<glm::mat4>  transforms = {};
             std::vector<glm::uvec2> toRenderNodes = {};
             
             std::unique_ptr<rb::gl::VertexArray> vao = nullptr;
-            std::unique_ptr<rb::gl::Buffer> translationBuffer = nullptr;
+            std::unique_ptr<rb::gl::Buffer> transformBuffer = nullptr;
             std::unique_ptr<rb::gl::Buffer> toRenderNodesBuffer = nullptr;
         };
         

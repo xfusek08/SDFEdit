@@ -31,7 +31,7 @@ vec4 sampleVolume(vec3 pos)
 
 // Founds lenght of ray until it exits the rendered cube
 // This function was inspired by: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
-// this is reduced version of the efficient slab test frem the article above
+// this is reduced version of the efficient slab test from the article above
 float getDistanceToEndOfBrick(Ray ray) {
     // prepare bb of current box
     vec3 maxCorner = vec3(edgeLenght, edgeLenght, edgeLenght);

@@ -3,15 +3,17 @@
 layout (points) in;
 layout (triangle_strip, max_vertices = 16) out;
 
-// node pool
-layout(std430, binding = 1) buffer NodePool     { uint nodes[]; };
-layout(std430, binding = 2) buffer NodeDataPool { uint nodeData[]; };
-layout(std430, binding = 3) buffer VertexBuffer { vec4 nodeVertices[]; };
-
-in uint nodeIndexes[];
-
-out uint nodeIndex;
+// various pre computed values needed by fragment shader - brick marcher
 smooth out vec3 fragPos;
+flat out vec4   nodeVertex;
+flat out float  voxelHalfSize;
+out mat4        brickToOctreeSpaceMatrix;
+flat out vec3   brickAtlasLookupShift;
+
+// data computed in vertex shader
+in float voxelHalfSizes[];
+in mat4  transformMatrices[];
+in vec3  brickAtlasLookupShifts[];
 
 // F - FRONT | T - TOP  | L - left
 // B - Back  | D - Down | R - Right
@@ -32,38 +34,39 @@ uniform mat4 viewProjection;
 
 void main() {
     // output common to whore node
-    nodeIndex = nodeIndexes[0];
+    mat4  transformMatrix = transformMatrices[0];
     
-    vec3  translate = gl_in[0].gl_Position.xyz;
-    float scale     = gl_in[0].gl_Position.w;
+    nodeVertex               = gl_in[0].gl_Position;
+    voxelHalfSize            = voxelHalfSizes[0];
+    brickToOctreeSpaceMatrix = inverse(transformMatrix);
+    brickAtlasLookupShift    = brickAtlasLookupShifts[0];
     
-    vec4  nodeVertex    = nodeVertices[nodeIndexes[0]];
-    vec3  nodePos       = nodeVertex.xyz;
-    vec3  translatedPos = nodePos + translate;
-    float d             = nodeVertex.w * 0.485 * scale;
-    
+    vec3  nodePos  = nodeVertex.xyz;
+    float stepSize = nodeVertex.w * 0.468;
+    vec4  worldPos; // tmp register
     #define EMIT_STRIP_VERTEX(shift) \
-        fragPos     = nodePos + shift; \
-        gl_Position = viewProjection * vec4(translatedPos + shift, 1); \
+        worldPos    = transformMatrix * vec4(nodePos + shift, 1); \
+        fragPos     = worldPos.xyz; \
+        gl_Position = viewProjection * worldPos; \
         EmitVertex()
     
-    EMIT_STRIP_VERTEX( BDL(d) );
-    EMIT_STRIP_VERTEX( BTL(d) );
-    EMIT_STRIP_VERTEX( BDR(d) );
-    EMIT_STRIP_VERTEX( BTR(d) );
-    EMIT_STRIP_VERTEX( FDR(d) );
-    EMIT_STRIP_VERTEX( FTR(d) );
-    EMIT_STRIP_VERTEX( FDL(d) );
-    EMIT_STRIP_VERTEX( FTL(d) );
+    EMIT_STRIP_VERTEX( BDL(stepSize) );
+    EMIT_STRIP_VERTEX( BTL(stepSize) );
+    EMIT_STRIP_VERTEX( BDR(stepSize) );
+    EMIT_STRIP_VERTEX( BTR(stepSize) );
+    EMIT_STRIP_VERTEX( FDR(stepSize) );
+    EMIT_STRIP_VERTEX( FTR(stepSize) );
+    EMIT_STRIP_VERTEX( FDL(stepSize) );
+    EMIT_STRIP_VERTEX( FTL(stepSize) );
     EndPrimitive();
-        
-    EMIT_STRIP_VERTEX( BDR(d) );
-    EMIT_STRIP_VERTEX( FDR(d) );
-    EMIT_STRIP_VERTEX( BDL(d) );
-    EMIT_STRIP_VERTEX( FDL(d) );
-    EMIT_STRIP_VERTEX( BTL(d) );
-    EMIT_STRIP_VERTEX( FTL(d) );
-    EMIT_STRIP_VERTEX( BTR(d) );
-    EMIT_STRIP_VERTEX( FTR(d) );
+    
+    EMIT_STRIP_VERTEX( BDR(stepSize) );
+    EMIT_STRIP_VERTEX( FDR(stepSize) );
+    EMIT_STRIP_VERTEX( BDL(stepSize) );
+    EMIT_STRIP_VERTEX( FDL(stepSize) );
+    EMIT_STRIP_VERTEX( BTL(stepSize) );
+    EMIT_STRIP_VERTEX( FTL(stepSize) );
+    EMIT_STRIP_VERTEX( BTR(stepSize) );
+    EMIT_STRIP_VERTEX( FTR(stepSize) );
     EndPrimitive();
 }
