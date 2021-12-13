@@ -23,7 +23,7 @@
     //       brickIndex / (8 * 8)
     //   );
     #define BRICK_INDEX_TO_COORDS(brickIndex) \
-        uvec3(brickIndex & 7, (brickIndex >> 3) & 7, brickIndex >> 6)
+        uvec3((brickIndex & 7), ((brickIndex >> 3) & 7), (brickIndex >> 6))
 #else
     #error BRICK_SIDE_LENGTH macro must have value 8 for now
 #endif
@@ -44,7 +44,7 @@
 #define CHILD_POINTER_MASK 0x3FFFFFFF
 
 #define SOLID_NODE 1
-#define EMPTY_NODE 2
+#define EMPTY_NODE 0
 
 // SDF settings
 #define MAX_DISTANCE     1000000.0
@@ -70,7 +70,7 @@ uniform uint allowSubdivision;
 
 // brick pool
 layout(binding = 0, offset = 4) uniform atomic_uint brickCount;
-layout(r32f, binding = 0) uniform image3D brickPoolTexture;
+layout(r32f, binding = 1) writeonly restrict uniform image3D brickPoolTexture;
 uniform uint BricksInOneDimension;
 
 // Primitive Cloud
@@ -105,6 +105,48 @@ float distanceToEdit(Edit edit, vec3 position) {
     }
 }
 
+
+void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue) {
+    // each voxel writes its own value
+    imageStore(brickPoolTexture, brickVoxelCoord, vec4(sdfValue, 0, 0, 0));
+    
+    // handle the border region
+    ivec3 cornerShift   = ivec3(0, 0, 0);
+    uint  corderCounter = 0;
+    
+    #define STORE_VALUE_WITH_SIFT(shift) imageStore(brickPoolTexture, brickVoxelCoord + shift, vec4(sdfValue, 0, 0, 0))
+    #define PROCESS_EDGE(sx, sy, sz) \
+        STORE_VALUE_WITH_SIFT(ivec3(sx, sy, sz)); \
+        cornerShift += ivec3(sx, sy, sz); \
+        corderCounter++
+    
+    // this branching probably can be speeded up by some clever register array and one or two branches
+    
+    if (gl_LocalInvocationID.x == 0) {
+        PROCESS_EDGE(-1, 0, 0);
+    } else if (gl_LocalInvocationID.x == 7) {
+        PROCESS_EDGE(1, 0, 0);
+    }
+    
+    if (gl_LocalInvocationID.y == 0) {
+        PROCESS_EDGE(0, -1, 0);
+    } else if (gl_LocalInvocationID.y == 7) {
+        PROCESS_EDGE(0, 1, 0);
+    }
+    
+    if (gl_LocalInvocationID.z == 0) {
+        PROCESS_EDGE(0, 0, -1);
+    } else if (gl_LocalInvocationID.z == 7) {
+        PROCESS_EDGE(0, 0, 1);
+    }
+    
+    // if (corderCounter == 3) {
+    //     STORE_VALUE_WITH_SIFT(cornerShift);
+    // }
+
+    // memoryBarrierImage(); // this will probably wont be needed, memory is not read in this shader
+}
+
 void main() {
     if (gl_LocalInvocationIndex == 0) {
         divide = 0; // prepare local memory
@@ -132,7 +174,7 @@ void main() {
     
     // vote if voxel intersects sdf surface
     float voxelSize = SQRT_3 * (fullStep * nodeVertex.w) * 0.5;
-    if (abs(sdfValue) < voxelSize * 0.5) {
+    if (abs(sdfValue) < voxelSize) {
         atomicAdd(divide, 1);
     }
     barrier();
@@ -149,21 +191,27 @@ void main() {
         
         // all threads will find voxel coordinate in brick pool based on the brick index
         uvec3 brickCoords = BRICK_INDEX_TO_COORDS(brickIndex);
-        uvec3 voxelCoord  = 8 * brickCoords + gl_LocalInvocationID;
+        uvec3 voxelCoord  = 10 * brickCoords + uvec3(1, 1, 1) + gl_LocalInvocationID;
+        // uvec3 voxelCoord  = 8 * brickCoords + gl_LocalInvocationID;
         
-        imageStore(brickPoolTexture, ivec3(voxelCoord), vec4(sdfValue, 0, 0, 0));
-        // memoryBarrierImage(); // this will probably wont be needed
+        writeToVolumeTexture(ivec3(voxelCoord), sdfValue);
         
         // I am fist thread in the group and will divide this node
         if (gl_LocalInvocationIndex == 0 ) {
-            nodeData[nodeIndex] = brickIndex; // TODO: store 3d coordinates?
+            uint flags = HAS_BRICK_BIT;
+            uint newTileFirstNodeIndex = 0;
+            nodeData[nodeIndex] = brickIndex; // TODO: store 3d coordinates in 10b each ?
+            
             if (allowSubdivision != 0) {
-                uint newTileFirstNodeIndex = atomicCounterAdd(nodeCount, NODES_PER_TILE);            // spawn tile
-                nodes[nodeIndex] = newNode(NODE_TO_TILE(newTileFirstNodeIndex), SUBDIVIDE_THIS_BIT); // link this node to its newly created child and keep its flags
+                flags |= SUBDIVIDE_THIS_BIT;
+                newTileFirstNodeIndex = atomicCounterAdd(nodeCount, NODES_PER_TILE);
             }
+            
+            nodes[nodeIndex] = newNode(NODE_TO_TILE(newTileFirstNodeIndex), flags); // link this node to its newly created child and keep its flags
         }
     } else {
         if (gl_LocalInvocationIndex == 0 ) {
+            nodes[nodeIndex] = newNode(0, 0); // make sure that brick and subdivide bits are zero
             nodeData[nodeIndex] = (sdfValue < 0) ? SOLID_NODE : EMPTY_NODE;
         }
     }

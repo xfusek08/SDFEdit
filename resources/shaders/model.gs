@@ -3,17 +3,20 @@
 layout (points) in;
 layout (triangle_strip, max_vertices = 16) out;
 
+// data computed in vertex shader
+in float voxelHalfSizes[];
+in mat4  transformMatrices[];
+in vec3  brickAtlasShifts[];
+in float brickInvertedSizes[];
+
 // various pre computed values needed by fragment shader - brick marcher
 smooth out vec3 fragPos;
 flat out vec4   nodeVertex;
 flat out float  voxelHalfSize;
 out mat4        brickToOctreeSpaceMatrix;
-flat out vec3   brickAtlasLookupShift;
+flat out vec3   brickAtlasShift;
+flat out float  brickInvertedSize;
 
-// data computed in vertex shader
-in float voxelHalfSizes[];
-in mat4  transformMatrices[];
-in vec3  brickAtlasLookupShifts[];
 
 // F - FRONT | T - TOP  | L - left
 // B - Back  | D - Down | R - Right
@@ -39,10 +42,12 @@ void main() {
     nodeVertex               = gl_in[0].gl_Position;
     voxelHalfSize            = voxelHalfSizes[0];
     brickToOctreeSpaceMatrix = inverse(transformMatrix);
-    brickAtlasLookupShift    = brickAtlasLookupShifts[0];
+    brickAtlasShift          = brickAtlasShifts[0];
+    brickInvertedSize        = brickInvertedSizes[0];
     
     vec3  nodePos  = nodeVertex.xyz;
-    float stepSize = nodeVertex.w * 0.468;
+    // float stepSize = nodeVertex.w * 0.468;
+    float stepSize = nodeVertex.w * 0.5;
     vec4  worldPos; // tmp register
     #define EMIT_STRIP_VERTEX(shift) \
         worldPos    = transformMatrix * vec4(nodePos + shift, 1); \

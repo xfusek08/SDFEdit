@@ -12,11 +12,21 @@ inline const vector<uint32> generateToRenderIndices(const Model& model, uint32 d
     
     // TODO: run algorithm where we trace rays on gpu from camera to scene and count hitted bricks for the model
     // NOTE: for now just copy indices of particular level
+    auto levelIndex = division % model.geometry->octree->levels.size();
     
-    const auto& level = model.geometry->octree->levels[division % model.geometry->octree->levels.size()];
-    // RB_DEBUG("division: " << (division % model.geometry->octree->levels.size()));
-    auto res = vector<uint32>(level.nodeCount);
-    iota(res.begin(), res.end(), level.startNode);
+    const auto& level = model.geometry->octree->levels[levelIndex];
+    
+    vector<uint32> res;
+    res.reserve(level.bricksInLevel);
+    
+    auto nodes = model.geometry->octree->getNodes();
+    for (int i = level.startNode; i < level.startNode + level.nodeCount; ++i) {
+        if (nodes[i].hasBrick()) {
+            res.push_back(i);
+        }
+    }
+    
+    // RB_DEBUG("Printing " << res.size() << " at level " << levelIndex);
     return move(res);
 }
 
@@ -84,6 +94,7 @@ void ModelVT::prepare(const Scene& scene)
 
 void ModelVT::render(const Scene& scene)
 {
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
@@ -95,11 +106,28 @@ void ModelVT::render(const Scene& scene)
         
         // attach buffers specific for current geometry/batch
         batch.vao->bind();
-        renderProgram.uniform("TranslationsBlock", *batch.transformBuffer, 4);
         geometryPrt->octree->nodeBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 1);
         geometryPrt->octree->nodeDataBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 2);
         geometryPrt->octree->vertexBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 3);
-        geometryPrt->octree->brickPool->bind();
+
+        // geometryPrt->octree->brickPool->bind(1, GL_READ_ONLY);
+        
+        glBindTexture(GL_TEXTURE_3D, geometryPrt->octree->brickPool->brickAtlas->getGlID());
+        
+        glBindImageTexture(
+            1,                        // Texture unit
+            geometryPrt->octree->brickPool->brickAtlas->getGlID(), // Texture name
+            0,                        // Level of Mip Map
+            GL_FALSE,                 // Layered (false)
+            0,                        // Specify layer if Layered is GL_FALSE
+            GL_READ_ONLY,             // access
+            GL_R32F                   // format
+        );
+        
+        renderProgram.uniform("brickAtlas", uint32(1));
+        renderProgram.uniform("TranslationsBlock", *batch.transformBuffer, 4);
+        renderProgram.uniform("brickAtlasScale", geometryPrt->octree->brickPool->getAtlasScale());
+        renderProgram.uniform("brickAtlasStride", geometryPrt->octree->brickPool->getAtlasStride());
         
         glDrawArrays(GL_POINTS, 0, batch.toRenderNodes.size());
     }

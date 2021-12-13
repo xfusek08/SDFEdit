@@ -59,6 +59,7 @@ class Application : public app::BasicOpenGLApplication
         auto geometry = make_shared<Geometry>(8);
         geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 0.5));
         geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,1,0}), 0.5));
+        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,1}), 0.5));
         
         scene->models.push_back(Model(geometry));
         scene->models.push_back(Model(geometry, Transform({3, 3, 0})));

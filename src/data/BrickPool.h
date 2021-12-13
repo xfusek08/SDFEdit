@@ -19,7 +19,12 @@ struct BrickPool {
         GLenum format               = GL_RED
     );
     
-    inline uint32 getMaximalBrickCount() const { return bricksInOneDimension * bricksInOneDimension * bricksInOneDimension; };
+    inline uint32  getMaximalBrickCount() const { return bricksInOneDimension * bricksInOneDimension * bricksInOneDimension; };
+    inline uint32  getAtlasEdgeSize()     const { return (brickSize + 2) * bricksInOneDimension; };
+    inline float32 getAtlasScale()        const { return float32(brickSize) / float32(getAtlasEdgeSize()); }
+    inline float32 getAtlasStride()       const { return 1.0 / float32(bricksInOneDimension); } // TODO: this will be different when leaving gaps of 1 voxel between bricks in the atlas
     
     void bind(GLuint textureUnit = 0, GLenum accessFlags = GL_READ_WRITE);
+    
+    void debugDraw() const;
 };

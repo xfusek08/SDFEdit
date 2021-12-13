@@ -49,6 +49,14 @@ SVOctree::Level* SVOctree::initFirstLevel()
     return addLevel(initialLevel);
 }
 
+vector<SVOctree::Node> SVOctree::getNodes() const
+{
+    auto res = vector<SVOctree::Node>(nodeCount, { 0 });
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    nodeBuffer->getData(res);
+    return move(res);
+}
+
 #ifdef DEBUG
     void printLevel(const SVOctree::Level& level) {
         RB_DEBUG("    " << level.depth << ": ");
@@ -60,13 +68,11 @@ SVOctree::Level* SVOctree::initFirstLevel()
     
     void SVOctree::debugPrint() const
     {
-        auto nodes     = vector<uint32>(nodeCount, 0u);
+        auto nodes     = getNodes();
         auto nodeData  = vector<uint32>(nodeCount, 0u);
         auto verticies = vector<glm::vec4>(nodeCount, glm::vec4(0.f));
         
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
         nodeDataBuffer->getData(nodeData);
-        nodeBuffer->getData(nodes);
         vertexBuffer->getData(verticies);
 
         RB_DEBUG("Octree on GPU:");
@@ -83,11 +89,12 @@ SVOctree::Level* SVOctree::initFirstLevel()
                 RB_DEBUG("        Tile: " << tileIndex);
                 for (int localIndex = 0; localIndex < getNodesPerTile(); ++localIndex) {
                     int i = tileIndex * getNodesPerTile() + localIndex;
+                    auto node = nodes[i];
                     RB_DEBUG("          (" << i << ") " << localIndex << ":  " <<
-                        ((nodes[i] & 0x80000000) ? "1" : "0") <<
-                        " | " <<((nodes[i] & 0x40000000) ? "1" : "0") <<
-                        " | " << (nodes[i] & 0x3FFFFFFF) <<
-                        "   " << nodeData[i] <<
+                        (node.isDivided() ? "d" : " ") <<
+                        " | " << (node.hasBrick() ? "b" : " ") <<
+                        " | " << node.getTileIndex() <<
+                        "   " << (node.hasBrick() ? STREAM_TO_STR(nodeData[i]) : ((nodeData[i] == 1) ? "s" : "e")) <<
                         "   " << glm::to_string(verticies[i])
                     );
                 }

@@ -85,7 +85,7 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     octree->nodeDataBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 2);
     octree->vertexBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 3);
     editBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 4);
-    octree->brickPool->bind();
+    octree->brickPool->bind(1, GL_WRITE_ONLY);
 
     // uniform: shift and scale SVO to be aligned with BB of the geometry
     const glm::vec4 correctionVector = glm::vec4(geometry.getAABB().center(), geometry.getAABB().longestEdgeSize());
@@ -143,9 +143,9 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
         octreeEvaluationProgram.use();
         RB_DEBUG("Dispatching evaluation compute: " << currentLevel->nodeCount);
         glDispatchCompute(currentLevel->nodeCount, 1, 1);
-        
+
         // 2.2. Retrieve values from atomic counters and calculate differences
-        glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT); // wait till all computation is done
+        glMemoryBarrier(GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT); // wait till all computation is done
         uint32 counterData[2];
         counterBuffer->getData(&counterData, 2 * sizeof(uint32));
         
@@ -187,10 +187,11 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
         currentLevel = octree->addLevel(nextLevel);
         
         // octree->debugPrint();
+        // octree->brickPool->debugDraw();
         
     } while(true); // no new nodes means algorithm is finished
     
-    // octree->debugPrint();
+    octree->debugPrint();
     // octree->debugPrintLevels();
     
     RB_DEBUG("Geometry evaluated into: " << octree->nodeCount << " nodes and " << octree->brickPool->brickCount << " bricks");
