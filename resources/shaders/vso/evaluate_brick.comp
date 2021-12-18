@@ -112,7 +112,7 @@ float getSDFValue(vec3 pos) {
     for (int i = 0; i < editCount; ++i) {
         Edit edit = edits[i];
         float distanceToPrimitive = distanceToEdit(edit, pos);
-        if (abs(distanceToPrimitive) < abs(sdfValue)) {
+        if (distanceToPrimitive < sdfValue) {
             sdfValue = distanceToPrimitive;
         }
     }
