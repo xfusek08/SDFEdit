@@ -34,5 +34,6 @@ class ModelVT : public VisualizationTechnique
         };
         
         rb::gl::Program renderProgram;
+        rb::gl::Program brickShellProgram;
         std::unordered_map<Geometry*, RenderBatchSOA> geometryBatches;
 };

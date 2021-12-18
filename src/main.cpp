@@ -15,6 +15,7 @@
 
 #include <Updater.h>
 #include <Renderer.h>
+#include <Gui.h>
 
 #include <Renderer.h>
 
@@ -28,6 +29,7 @@ class Application : public app::BasicOpenGLApplication
     shared_ptr<Scene>    scene;
     unique_ptr<Updater>  updater;
     unique_ptr<Renderer> renderer;
+    unique_ptr<Gui>      gui;
     
     bool init() override
     {
@@ -42,9 +44,12 @@ class Application : public app::BasicOpenGLApplication
         
         renderer = make_unique<Renderer>(VTArray{
             make_shared<ModelVT>(),
-            make_shared<OctreeWireframeVT>(),
+            // make_shared<OctreeWireframeVT>(),
             make_shared<AxisVT>(),
         });
+        
+        gui = make_unique<Gui>(*window);
+        
         
         // Camera Set up
         // -------------
@@ -57,12 +62,12 @@ class Application : public app::BasicOpenGLApplication
         // ----------------------
         
         auto geometry = make_shared<Geometry>(8);
-        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 0.5));
-        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,1,0}), 0.5));
-        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,1}), 0.5));
+        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,0}), 2));
+        geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({2,0,0}), 0.5));
+        // geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({0,0,1}), 0.5));
         
         scene->models.push_back(Model(geometry));
-        scene->models.push_back(Model(geometry, Transform({3, 3, 0})));
+        scene->models.push_back(Model(geometry, Transform({30, 30, 30})));
         // scene->models.push_back(Model(geometry, Transform({4, 0, 0})));
         // scene->models.push_back(Model(geometry, Transform({8, 0, 0})));
         
@@ -77,12 +82,13 @@ class Application : public app::BasicOpenGLApplication
         // glm::vec3 max = glm::vec3{10, 10, 10};
         // for (int i = 0; i < 100; ++i) {
         //     geometry->addEdit(
-        //         primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.01, 1.5))
+        //         primitives::Sphere::createEdit(opAdd, Transform(randomPosition(min, max)), randomFloat(0.05, 3))
         //     );
         // }
         
         updater->init(scene);
         renderer->init(scene);
+        gui->init(scene);
         return true;
     }
     
@@ -100,6 +106,7 @@ class Application : public app::BasicOpenGLApplication
         }
         
         updater->onInputChange(scene, input, tick);
+        gui->prepare(scene);
         return false;
     }
     
@@ -113,6 +120,9 @@ class Application : public app::BasicOpenGLApplication
     {
         renderer->prepare(*scene);
         renderer->render(*scene);
+        
+        gui->render(*scene);
+        
         scene->cameraController->getCamera().dirtyFlag = false;
     }
 };

@@ -46,7 +46,7 @@ void main() {
     brickInvertedSize        = brickInvertedSizes[0];
     
     vec3  nodePos  = nodeVertex.xyz;
-    // float stepSize = nodeVertex.w * 0.468;
+    // float stepSize = nodeVertex.w * 0.48;
     float stepSize = nodeVertex.w * 0.5;
     vec4  worldPos; // tmp register
     #define EMIT_STRIP_VERTEX(shift) \

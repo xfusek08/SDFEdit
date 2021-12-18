@@ -106,15 +106,28 @@ float distanceToEdit(Edit edit, vec3 position) {
 }
 
 
-void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue) {
+float getSDFValue(vec3 pos) {
+    // compute distance to the voxel center -> sdfValue
+    float sdfValue = MAX_DISTANCE;
+    for (int i = 0; i < editCount; ++i) {
+        Edit edit = edits[i];
+        float distanceToPrimitive = distanceToEdit(edit, pos);
+        if (abs(distanceToPrimitive) < abs(sdfValue)) {
+            sdfValue = distanceToPrimitive;
+        }
+    }
+    return sdfValue;
+}
+
+void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue, vec3 voxelCenter, float fullStep, float scale) {
     // each voxel writes its own value
-    imageStore(brickPoolTexture, brickVoxelCoord, vec4(sdfValue, 0, 0, 0));
+    imageStore(brickPoolTexture, brickVoxelCoord, vec4(scale * sdfValue, 0, 0, 0));
     
     // handle the border region
     ivec3 cornerShift   = ivec3(0, 0, 0);
     uint  corderCounter = 0;
     
-    #define STORE_VALUE_WITH_SIFT(shift) imageStore(brickPoolTexture, brickVoxelCoord + shift, vec4(sdfValue, 0, 0, 0))
+    #define STORE_VALUE_WITH_SIFT(shift) imageStore(brickPoolTexture, brickVoxelCoord + shift, vec4(scale * getSDFValue(fullStep * (1 / scale) * vec3(shift) + voxelCenter), 0, 0, 0))
     #define PROCESS_EDGE(sx, sy, sz) \
         STORE_VALUE_WITH_SIFT(ivec3(sx, sy, sz)); \
         cornerShift += ivec3(sx, sy, sz); \
@@ -140,9 +153,15 @@ void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue) {
         PROCESS_EDGE(0, 0, 1);
     }
     
-    // if (corderCounter == 3) {
-    //     STORE_VALUE_WITH_SIFT(cornerShift);
-    // }
+    if (corderCounter >= 2) {
+        STORE_VALUE_WITH_SIFT(cornerShift);
+    }
+    
+    if (corderCounter == 3) {
+        STORE_VALUE_WITH_SIFT(ivec3(0, cornerShift.y, cornerShift.z));
+        STORE_VALUE_WITH_SIFT(ivec3(cornerShift.x, 0, cornerShift.z));
+        STORE_VALUE_WITH_SIFT(ivec3(cornerShift.x, cornerShift.y, 0));
+    }
 
     // memoryBarrierImage(); // this will probably wont be needed, memory is not read in this shader
 }
@@ -157,23 +176,14 @@ void main() {
     vec4 nodeVertex  = nodeVertices[nodeIndex];
    
     ivec3 branchCoefficients = ivec3(gl_LocalInvocationID) - (BRICK_SIDE_LENGTH / 2);
-    float fullStep           = 1.0 / float(BRICK_SIDE_LENGTH); // hopefully the only FP division and possibly optimize into multiplication by 0.5, 0.25 etc.
+    float fullStep           = 1.0 / (float(BRICK_SIDE_LENGTH)); // hopefully the only FP division and possibly optimize into multiplication by 0.5, 0.25 etc.
     float halfStep           = fullStep * 0.5;
     vec3  shiftVector        = fullStep * vec3(branchCoefficients) + halfStep;
     vec3  voxelCenter        = nodeVertex.w * shiftVector + nodeVertex.xyz;
-    
-    // compute distance to the voxel center -> sdfValue
-    float sdfValue = MAX_DISTANCE;
-    for (int i = 0; i < editCount; ++i) {
-        Edit edit = edits[i];
-        float distanceToPrimitive = distanceToEdit(edit, voxelCenter);
-        if (abs(distanceToPrimitive) < abs(sdfValue)) {
-            sdfValue = distanceToPrimitive;
-        }
-    }
+    float sdfValue           = getSDFValue(voxelCenter);
     
     // vote if voxel intersects sdf surface
-    float voxelSize = SQRT_3 * (fullStep * nodeVertex.w) * 0.5;
+    float voxelSize = SQRT_3 * (fullStep * nodeVertex.w) * 0.4;
     if (abs(sdfValue) < voxelSize) {
         atomicAdd(divide, 1);
     }
@@ -194,7 +204,7 @@ void main() {
         uvec3 voxelCoord  = 10 * brickCoords + uvec3(1, 1, 1) + gl_LocalInvocationID;
         // uvec3 voxelCoord  = 8 * brickCoords + gl_LocalInvocationID;
         
-        writeToVolumeTexture(ivec3(voxelCoord), sdfValue);
+        writeToVolumeTexture(ivec3(voxelCoord), sdfValue, voxelCenter, fullStep, 1.0 / nodeVertex.w);
         
         // I am fist thread in the group and will divide this node
         if (gl_LocalInvocationIndex == 0 ) {

@@ -15,6 +15,11 @@
 
 #define MAX_STEPS 50 // after N steps will marching algorithm ended event if marcher did not stepped out of the bricks volume
 
+uniform float a;
+uniform float b;
+uniform float c;
+uniform float d;
+
 uniform vec3   cameraPosition; // Position of the camera will be important in the ray marching algorithm. Ray will be casted from it to thr fragment position.
 
 smooth in vec3 fragPos;        // Fragment position in world space toward it will ray be casted from the camera
@@ -38,10 +43,13 @@ uniform sampler3D brickAtlas;
 uniform float     brickAtlasScale; // This value scales down a position in ray-marcher normalized space to the position inside single brick in brick atlas, this is precomputed for whole dispatch because it is dependent only on dimensions of the atlas
 flat in vec3      brickAtlasShift; // vector shifting scaled position inside the brick volume to correct position inside the brick atlas, this is precomputed per brick in vertex shader
 flat in float     brickInvertedSize;
+
 float sampleVolume(vec3 pos) {
     return texture(
         brickAtlas,
-        brickAtlasShift + brickInvertedSize * pos * brickAtlasScale + vec3(1.0 / (200.0))
+        // d * (brickInvertedSize * pos * ((8.0) / 300.0) + brickAtlasShift + vec3((1.0) / (300.0))) + vec3(a,b,c)
+        // pos * ((8.0 * d) / 300.0) + brickAtlasShift + vec3((1.0 + a) / (300.0))
+        pos * ((8.0) / 300.0) + brickAtlasShift + vec3((1.0) / (300.0))
     ).r;
     // return texture(
     //     brickAtlas,
@@ -59,23 +67,22 @@ struct Ray {                  // the helper data structure to where store ray ma
 
 // lighting related stuff
 vec3 getNormal(vec3 point, float currentDistance) {
-    vec2 e = vec2(voxelHalfSize, 0);
-    vec3 n = currentDistance - vec3(
-        sampleVolume(point - e.xyy),
-        sampleVolume(point - e.yxy),
-        sampleVolume(point - e.yyx)
-    );
+    vec2 e = vec2(0.05, 0);
+    vec3 n = vec3(
+        sampleVolume(point + e.xyy),
+        sampleVolume(point + e.yxy),
+        sampleVolume(point + e.yyx)
+    ) - currentDistance;
     return normalize(n);
 }
 vec4 getHitColor(vec3 pos, vec3 normal, vec3 camPos) {
-    vec3 lightPos = (brickToOctreeSpaceMatrix * vec4(5, 20, 10, 1)).xyz;
     vec3 lightColor = vec3(1, 1, 1);
-    vec3 ambient = vec3(1, 1, 1) * 0.1;
+    vec3 ambient = vec3(1, 1, 1) * 0.3;
     vec3 objectColor = vec3(1, 0.4, 0.2);
     float specularStrength = 0.5;
     
     // diffuse
-    vec3 lightDir = normalize(lightPos - pos);
+    vec3 lightDir = normalize(vec3(1, 1, 1));
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
     
@@ -96,7 +103,7 @@ vec4 getHitColor(vec3 pos, vec3 normal, vec3 camPos) {
 float getDistanceToEndOfBrick(vec3 position, vec3 direction) {
     
     // prepare bb of current box
-    vec3 maxCorner = nodeVertex.www;
+    vec3 maxCorner = vec3(1,1,1);
     vec3 minCorner = vec3(0,0,0);
     
     vec3 inverseRayDir = 1.0 / direction;
@@ -106,6 +113,45 @@ float getDistanceToEndOfBrick(vec3 position, vec3 direction) {
     vec3 tMaxV = max(tMinV0, tMaxV0);
     
     return min(tMaxV.x, min(tMaxV.y, tMaxV.z));
+}
+
+void rayMarch(Ray ray, vec3 camPos) {
+    float maxDistance = getDistanceToEndOfBrick(ray.origin, ray.direction);
+    
+    uint steps = 0; // counted loop for debug evaluation
+    for (steps = 0; steps < MAX_STEPS; ++steps) {
+        if (ray.dist >= maxDistance) { // check if we stepped outside the brick.
+            discard;
+            break;
+        }
+        
+        vec3  actPosition  = (ray.dist * ray.direction) + ray.origin;
+        float distToVolume = sampleVolume(actPosition);
+        
+        if (distToVolume <= 0.001) {
+            fColor = getHitColor(actPosition, getNormal(actPosition, distToVolume), camPos);
+            return;
+        }
+        
+        ray.dist += distToVolume; // make step into volume
+    }
+    
+    // discard;
+    float c = float(steps) / float(MAX_STEPS);
+    fColor = vec4(1, 0, 0, c);
+}
+
+void showAtlasSamples(Ray ray) {
+    fColor = vec4(vec3(sampleVolume(ray.origin)), 1);
+}
+
+void showVoxels(Ray ray) {
+    float maxDistance = getDistanceToEndOfBrick(ray.origin, ray.direction);
+    vec3 pos = ray.origin;
+    // pos = floor((pos + vec3(a,b,c)) * (8.0 * d));
+    fColor = vec4(pos, 1);
+    // fColor = vec4(texture(brickAtlas, pos).rrr, 1);
+    // fColor = vec4(texelFetch(brickAtlas, ivec3(pos), 0).rrr, 1);
 }
 
 void main() {
@@ -119,44 +165,15 @@ void main() {
     _fragPos        += nodeVertex.www * 0.5 - nodeVertex.xyz;
     _cameraPosition += nodeVertex.www * 0.5 - nodeVertex.xyz; // TODO: shifted camera position can be computed per brick in vertex shader
     
+    _fragPos        *= brickInvertedSize;
+    _cameraPosition *= brickInvertedSize;
+    
     Ray ray = Ray(_fragPos, normalize(_fragPos - _cameraPosition), 0);
     
-    // 2. compute maximal length of ray intersection through the brick, this computation requires to be in the ray-marcher space
-    float maxDistance = getDistanceToEndOfBrick(ray.origin, ray.direction);
-    
-    // fColor = vec4(vec3(sampleVolume(_fragPos)), 1);
-    // vec3 a = brickAtlasShift + brickInvertedSize * _fragPos * brickAtlasScale + vec3(1.0 / (200));
-    // a /= 2;
-    // a += vec3(0.03);
-    // fColor = vec4(texture(brickAtlas, a).rrr, 1);
-    // fColor = vec4(brickInvertedSize * _fragPos, 1);
-    // fColor = vec4(brickInvertedSize * _fragPos + brickAtlasShift * (1.0 / brickAtlasScale), 1);
-    // fColor = vec4((brickAtlasShift, 1);
-    // fColor = vec4(brickInvertedSize * _fragPos + brickAtlasShift, 1);
-    // return;
-    
-    // 3. run the ray marching algorithm
-    
-    uint steps = 0; // counted loop for debug evaluation
-    for (steps = 0; steps < MAX_STEPS; ++steps) {
-        
-        vec3  actPosition  = (ray.dist * ray.direction) + ray.origin;
-        float distToVolume = sampleVolume(actPosition);
-        
-        if (distToVolume <= voxelHalfSize) {
-            fColor = getHitColor(actPosition, getNormal(actPosition, distToVolume), _cameraPosition);
-            // fColor = vec4(vec3(distToVolume),1);
-            return;
-        }
-        
-        ray.dist += distToVolume;      // make step into volume
-        if (ray.dist >= maxDistance) { // check if we stepped outside the brick.
-            // discard;
-            break;
-        }
-    }
-    
-    discard;
-    float c = float(steps) / float(MAX_STEPS);
-    fColor = vec4(1, 0, 0, c);
+    // fColor = vec4(ray.origin, 1);
+    // fColor = vec4(vec3(getDistanceToEndOfBrick(ray.origin, ray.direction)), 1);
+    // fColor = vec4(vec3(sampleVolume(ray.origin)), 1);
+    rayMarch(ray, _cameraPosition);
+    // showAtlasSamples(ray);
+    // showVoxels(ray);
 }

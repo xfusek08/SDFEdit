@@ -191,7 +191,7 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
         
     } while(true); // no new nodes means algorithm is finished
     
-    octree->debugPrint();
+    // octree->debugPrint();
     // octree->debugPrintLevels();
     
     RB_DEBUG("Geometry evaluated into: " << octree->nodeCount << " nodes and " << octree->brickPool->brickCount << " bricks");

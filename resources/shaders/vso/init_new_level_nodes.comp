@@ -38,7 +38,7 @@ void main() {
     // All branching is common for all threads in the group
     if (initRootTile == 1) {
         node      = 0;
-        parentPos = vec4(0, 0, 0, correctionVector.w);
+        parentPos = vec4(0, 0, 0, correctionVector.w * 1.15);
     } else {
         node      = nodes[parentIndex];
         parentPos = nodeVertices[parentIndex];

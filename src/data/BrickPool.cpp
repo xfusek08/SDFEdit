@@ -18,11 +18,17 @@ BrickPool::BrickPool(uint32 bricksInOneDimension, uint32 brickSize, GLenum forma
     glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     // glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-    float borderDistance = 0;
-    glTextureParameterfv(brickAtlas->getGlID(), GL_TEXTURE_BORDER_COLOR, &borderDistance);
+    
+    glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    
+    // glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    // glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    // glTextureParameteri(brickAtlas->getGlID(), GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+    // float borderDistance = 0;
+    // glTextureParameterfv(brickAtlas->getGlID(), GL_TEXTURE_BORDER_COLOR, &borderDistance);
+    
     glBindTexture(GL_TEXTURE_3D, brickAtlas->getGlID());
     
     // for now voxels contains only fp distance values
