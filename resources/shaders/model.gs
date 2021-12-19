@@ -3,20 +3,22 @@
 layout (points) in;
 layout (triangle_strip, max_vertices = 16) out;
 
+uniform vec3 cameraPosition;
+
+uniform float a;
+uniform float b;
+uniform float c;
+uniform float d;
+
 // data computed in vertex shader
-in float voxelHalfSizes[];
 in mat4  transformMatrices[];
 in vec3  brickAtlasShifts[];
-in float brickInvertedSizes[];
 
 // various pre computed values needed by fragment shader - brick marcher
 smooth out vec3 fragPos;
-flat out vec4   nodeVertex;
-flat out float  voxelHalfSize;
-out mat4        brickToOctreeSpaceMatrix;
+flat out mat4   brickTransformMatrix;
+flat out vec3   brickCameraPosition;
 flat out vec3   brickAtlasShift;
-flat out float  brickInvertedSize;
-
 
 // F - FRONT | T - TOP  | L - left
 // B - Back  | D - Down | R - Right
@@ -35,22 +37,39 @@ flat out float  brickInvertedSize;
 
 uniform mat4 viewProjection;
 
+mat4 translate(vec3 translation) {
+    mat4 res = mat4(1.0);
+    res[3][0] = translation.x;
+    res[3][1] = translation.y;
+    res[3][2] = translation.z;
+    return res;
+}
+
+mat4 scale(float scaling) {
+    mat4 res = mat4(1.0);
+    res[0][0] = scaling;
+    res[1][1] = scaling;
+    res[2][2] = scaling;
+    return res;
+}
+
 void main() {
     // output common to whore node
-    mat4  transformMatrix = transformMatrices[0];
     
-    nodeVertex               = gl_in[0].gl_Position;
-    voxelHalfSize            = voxelHalfSizes[0];
-    brickToOctreeSpaceMatrix = inverse(transformMatrix);
-    brickAtlasShift          = brickAtlasShifts[0];
-    brickInvertedSize        = brickInvertedSizes[0];
+    vec4  nodeVertex        = gl_in[0].gl_Position;
+    float brickInvertedSize = 1.0 / nodeVertex.w;
+    float stepSize          = nodeVertex.w * 0.5;
+    vec3  brickShift        = nodeVertex.www * 0.5 - nodeVertex.xyz;
+    mat4  transformMatrix   = transformMatrices[0];
     
-    vec3  nodePos  = nodeVertex.xyz;
-    // float stepSize = nodeVertex.w * 0.48;
-    float stepSize = nodeVertex.w * 0.5;
+    // add scaling to the matrix
+    brickTransformMatrix = scale(brickInvertedSize) * translate(brickShift) * inverse(transformMatrix);
+    brickCameraPosition  = (brickTransformMatrix * vec4(cameraPosition, 1)).xyz;
+    brickAtlasShift      = brickAtlasShifts[0];
+    
     vec4  worldPos; // tmp register
     #define EMIT_STRIP_VERTEX(shift) \
-        worldPos    = transformMatrix * vec4(nodePos + shift, 1); \
+        worldPos    = transformMatrix * vec4(nodeVertex.xyz + shift, 1); \
         fragPos     = worldPos.xyz; \
         gl_Position = viewProjection * worldPos; \
         EmitVertex()

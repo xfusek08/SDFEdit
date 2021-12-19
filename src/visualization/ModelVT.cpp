@@ -138,8 +138,10 @@ void ModelVT::render(const Scene& scene)
             
             prg.uniform("brickAtlas", uint32(1));
             prg.uniform("TranslationsBlock", *batch.transformBuffer, 4);
-            prg.uniform("brickAtlasScale", geometryPrt->octree->brickPool->getAtlasScale());
-            prg.uniform("brickAtlasStride", geometryPrt->octree->brickPool->getAtlasStride());
+            
+            prg.uniform("brickAtlasScale",     geometryPrt->octree->brickPool->getAtlasScale());
+            prg.uniform("brickAtlasVoxelSize", geometryPrt->octree->brickPool->getAtlasVoxelSize());
+            prg.uniform("brickAtlasStride",    geometryPrt->octree->brickPool->getAtlasStride());
             
             // debug wars
             auto setVar = [&] (string ident) {
@@ -156,7 +158,6 @@ void ModelVT::render(const Scene& scene)
     };
     
     render(renderProgram);
-    
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // render(brickShellProgram);
     // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

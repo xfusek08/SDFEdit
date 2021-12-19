@@ -20,8 +20,8 @@ class Gui
         void prepare(std::shared_ptr<Scene> scene);
         void render(const Scene& scene);
     private:
-        float a = 0.5 / 10.0;
-        float b = 1.0;
+        float a = 0.0;
+        float b = 0.0;
         float c = 0.0;
         float d = 1.0;
 };

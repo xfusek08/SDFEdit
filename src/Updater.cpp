@@ -36,6 +36,7 @@ void Updater::onInputChange(shared_ptr<Scene> scene, const input::InputState& in
     }
 }
 
+glm::vec3 dir = glm::vec3(0, 0.1, 0);
 void Updater::onTick(shared_ptr<Scene> scene, const input::InputState& input, const timing::TimeStep& tick)
 {
     // TODO: for each updatable item ins scene:
@@ -45,7 +46,13 @@ void Updater::onTick(shared_ptr<Scene> scene, const input::InputState& input, co
     }
     
     if (scene->models.size() > 1) {
+        scene->models[0].transform.position = scene->models[0].transform.position + dir;
+        scene->models[0].transform.orientation = glm::normalize(scene->models[0].transform.orientation * glm::quat(glm::vec3{0.0, 0.01, 0.0}));
         scene->models[1].transform.orientation = glm::normalize(scene->models[1].transform.orientation * glm::quat(glm::vec3{0.02, 0.02, 0.02}));
+    }
+    
+    if (scene->models[0].transform.position.y > 2 || scene->models[0].transform.position.y < 0) {
+        dir.y *= -1;
     }
     
     // if (tick.order % 60 == 0) {

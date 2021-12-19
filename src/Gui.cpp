@@ -40,7 +40,7 @@ void Gui::init(shared_ptr<Scene> scene)
 {
     #define defvar(ident) \
         scene->vars.addFloat(#ident, ident); \
-        addVarsLimitsF(scene->vars, #ident, -5.0, 5.0, 0.001)
+        addVarsLimitsF(scene->vars, #ident, -15.0, 15.0, 0.001)
         
     defvar(a);
     defvar(b);
