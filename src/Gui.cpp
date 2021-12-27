@@ -46,6 +46,12 @@ void Gui::init(shared_ptr<Scene> scene)
     defvar(b);
     defvar(c);
     defvar(d);
+    
+    scene->vars.addFloat("blending", blending);
+    addVarsLimitsF(scene->vars, "blending", 0.01, 2.0, 0.01);
+
+    scene->vars.addFloat("rounding", rounding);
+    addVarsLimitsF(scene->vars, "rounding", 0.01, 1.0, 0.01);
 }
 
 void Gui::prepare(shared_ptr<Scene> scene)

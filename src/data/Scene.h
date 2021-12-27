@@ -1,6 +1,6 @@
-#pragma once
+ #pragma once
 
-#include <data/model.h>
+#include <data/Model.h>
 #include <data/geometry.h>
 #include <data/BrickPool.h>
 

@@ -49,7 +49,18 @@
 // SDF settings
 #define MAX_DISTANCE     1000000.0
 
-#define PRIMITIVE_SPHERE 0
+#define PRIMITIVE_SPHERE    0
+#define PRIMITIVE_CAPSULE   1
+#define PRIMITIVE_TORUS     2
+#define PRIMITIVE_BOX       3
+#define PRIMITIVE_CYLINDER  4
+#define PRIMITIVE_CONE      5
+#define PRIMITIVE_ROUNDCONE 6
+
+#define OPERATION_ADD       0
+#define OPERATION_SUBTRACT  1
+#define OPERATION_INTERSECT 2
+#define OPERATION_PAINT     3
 
 #define SQRT_3 1.73205080757
 
@@ -75,36 +86,124 @@ uniform uint BricksInOneDimension;
 
 // Primitive Cloud
 struct Edit {
-    uint type;
-    uint op;
-    uint blending;
-    uint padding1;
-    vec3 position;
-    float padding2;
-    vec4 data;
+    uint  type;
+    uint  op;
+    float blending;
+    uint  padding1;
+    mat4  transform;
+    vec4  data;
 };
+
 layout(std430, binding = 4) buffer Input { Edit edits[]; };
 uniform uint editCount;
 uniform vec4 correctionVector;
 
+uniform float a;
+uniform float b;
+uniform float c;
+uniform float d;
+
 shared uint divide; // place in group-shared memory into which voting whenever node will be subdivided will take place.
 shared uint brickIndex;
 
+// SD Function of point to edit
+#define TRANSFORM_POS(edit, pos) (edit.transform * vec4(pos + correctionVector.xyz, 1)).xyz;
 
-// Shader implementation
-// ---------------------
+float sdSphere(Edit edit, vec3 position) {
+    vec3 p = TRANSFORM_POS(edit, position);
+    return length(p) - edit.data.x;
+}
 
-uint newNode(uint tileIndex, uint flags) {
-    return (tileIndex & CHILD_POINTER_MASK) | (flags & NODE_FLAGS_MASK);
+float sdCapsule(Edit edit, vec3 position) {
+    vec3 p = TRANSFORM_POS(edit, position);
+    vec3 a = vec3(0,  0.5, 0) * edit.data.y;
+    vec3 b = vec3(0, -0.5, 0) * edit.data.y;
+    vec3 ab = b - a;
+    vec3 ap = p - a;
+    float t = clamp(dot(ab, ap) / dot(ab, ab), 0, 1);
+    return length(ap - ab * t) - edit.data.x;
+}
+
+float sdTorus(Edit edit, vec3 position) {
+    vec3  p = TRANSFORM_POS(edit, position);
+    float x = length(p.xz) - edit.data.x;
+    return length(vec2(x, p.y)) - edit.data.y;
+}
+
+float sdBox(Edit edit, vec3 position) {
+    vec3  p = TRANSFORM_POS(edit, position);
+    vec3  d = abs(p) - edit.data.xyz + edit.data.www;
+    float e = length(max(d, 0.0));
+    float i = min(max(d.x, max(d.y, d.z)), 0.0);
+    return e + i - edit.data.w;
+}
+
+float sdCylinder(Edit edit, vec3 position) {
+    vec3  p = TRANSFORM_POS(edit, position);
+    float w = edit.data.x - edit.data.z;
+    float h = edit.data.y - edit.data.z;
+    vec2  d = abs(vec2(length(p.xz), p.y)) - vec2(w, h);
+    return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)) - edit.data.z;
+}
+
+float sdCone(Edit edit, vec3 position) {
+    float r1 = edit.data.x - edit.data.w;
+    float r2 = edit.data.y - edit.data.w;
+    float h  = edit.data.z - edit.data.w;
+    vec3  p  = TRANSFORM_POS(edit, position);
+
+    vec2  q  = vec2(length(p.xz), p.y);
+    vec2  k1 = vec2(r2, h);
+    vec2  k2 = vec2(r2 - r1, 2.0 * h);
+    vec2  ca = vec2(q.x - min(q.x, (q.y < 0.0) ? r1 : r2), abs(q.y) - h);
+    vec2  cb = q - k1 + k2 * clamp(dot(k1 - q, k2) / dot(k2.xy, k2.xy), 0.0, 1.0);
+    float s  = (cb.x < 0.0 && ca.y < 0.0) ? -1.0 : 1.0;
+    return s * sqrt(min(dot(ca.xy, ca.xy), dot(cb.xy, cb.xy))) - edit.data.w;
+}
+
+float sdRoundcone(Edit edit, vec3 position) {
+    float r1 = edit.data.x;
+    float r2 = edit.data.y;
+    float h  = edit.data.z;
+    vec3  p  = TRANSFORM_POS(edit, position);
+    p.y += h * 0.5;
+
+    vec2 q = vec2(length(p.xz), p.y);
+
+    float b = (r1 - r2) / h;
+    float a = sqrt(1.0 - b * b);
+    float k = dot(q, vec2(-b, a));
+
+    if(k < 0.0)   return length(q) - r1;
+    if(k > a * h) return length(q - vec2(0.0, h)) - r2;
+
+    return dot(q, vec2(a, b)) - r1;
+}
+
+// sdf evaluation math function
+// see https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
+float smoothMin(float dist1, float dist2, float koeficient) {
+    float h = clamp(0.5 + 0.5 * (dist1 - dist2) / koeficient, 0.0, 1.0 );
+    return mix(dist1, dist2, h) - koeficient * h * (1.0 - h);
+}
+
+float smoothMax(float dist1, float dist2, float koeficient) {
+    float h = clamp(0.5 - 0.5 * (dist1 - dist2) / koeficient, 0.0, 1.0 );
+    return mix(dist1, dist2, h) + koeficient * h * (1.0 - h);
 }
 
 float distanceToEdit(Edit edit, vec3 position) {
     switch (edit.type) {
-        case PRIMITIVE_SPHERE: return distance(edit.position - correctionVector.xyz, position) - edit.data.x;
-        default:               return MAX_DISTANCE;
+        case PRIMITIVE_SPHERE:    return sdSphere(edit, position);
+        case PRIMITIVE_CAPSULE:   return sdCapsule(edit, position);
+        case PRIMITIVE_TORUS:     return sdTorus(edit, position);
+        case PRIMITIVE_BOX:       return sdBox(edit, position);
+        case PRIMITIVE_CYLINDER:  return sdCylinder(edit, position);
+        case PRIMITIVE_CONE:      return sdCone(edit, position);
+        case PRIMITIVE_ROUNDCONE: return sdRoundcone(edit, position);
     }
+    return MAX_DISTANCE;
 }
-
 
 float getSDFValue(vec3 pos) {
     // compute distance to the voxel center -> sdfValue
@@ -112,11 +211,21 @@ float getSDFValue(vec3 pos) {
     for (int i = 0; i < editCount; ++i) {
         Edit edit = edits[i];
         float distanceToPrimitive = distanceToEdit(edit, pos);
-        if (distanceToPrimitive < sdfValue) {
-            sdfValue = distanceToPrimitive;
+        
+        switch (edit.op) {
+            case OPERATION_ADD:       sdfValue = smoothMin( distanceToPrimitive, sdfValue, max(0.001, edit.blending)); break;
+            case OPERATION_SUBTRACT:  sdfValue = smoothMax(-distanceToPrimitive, sdfValue, max(0.001, edit.blending)); break;
+            case OPERATION_INTERSECT: sdfValue = smoothMax( distanceToPrimitive, sdfValue, max(0.001, edit.blending)); break;
+            case OPERATION_PAINT:     sdfValue = sdfValue; break; // TODO: pointing using primitive is not implemented
         }
     }
     return sdfValue;
+}
+
+// volume manipulation
+
+uint newNode(uint tileIndex, uint flags) {
+    return (tileIndex & CHILD_POINTER_MASK) | (flags & NODE_FLAGS_MASK);
 }
 
 void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue, vec3 voxelCenter, float fullStep, float scale) {
@@ -127,7 +236,7 @@ void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue, vec3 voxelCente
     ivec3 cornerShift   = ivec3(0, 0, 0);
     uint  corderCounter = 0;
     
-    #define STORE_VALUE_WITH_SIFT(shift) imageStore(brickPoolTexture, brickVoxelCoord + shift, vec4(scale * getSDFValue(fullStep * (1 / scale) * vec3(shift) + voxelCenter), 0, 0, 0))
+    #define STORE_VALUE_WITH_SIFT(shift) imageStore(brickPoolTexture, brickVoxelCoord + shift, vec4(scale * getSDFValue(fullStep * (1.0 / scale) * vec3(shift) + voxelCenter), 0, 0, 0))
     #define PROCESS_EDGE(sx, sy, sz) \
         STORE_VALUE_WITH_SIFT(ivec3(sx, sy, sz)); \
         cornerShift += ivec3(sx, sy, sz); \
@@ -183,7 +292,7 @@ void main() {
     float sdfValue           = getSDFValue(voxelCenter);
     
     // vote if voxel intersects sdf surface
-    float voxelSize = SQRT_3 * (fullStep * nodeVertex.w) * 0.4;
+    float voxelSize = SQRT_3 * (fullStep * nodeVertex.w) * 0.5;
     if (abs(sdfValue) < voxelSize) {
         atomicAdd(divide, 1);
     }

@@ -10,6 +10,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/build)
 
 add_subdirectory(vendor/RenderBase/RenderBase)
 add_subdirectory(vendor/GuiVars)
+add_subdirectory(vendor/Json)
 
 file(GLOB_RECURSE
     SOURCES
@@ -23,6 +24,7 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME}
     RenderBase
     GuiVars
+    Json
 )
 
 target_include_directories(${PROJECT_NAME}

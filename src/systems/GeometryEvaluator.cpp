@@ -15,10 +15,9 @@ using namespace rb;
 struct GPUEdit {
     uint32    type;
     uint32    op;
-    uint32    blending;
+    float32   blending;
     uint32    _padding1;
-    glm::vec3 pos;
-    float     _padding2;
+    glm::mat4 transform;
     glm::vec4 data;
 };
 
@@ -39,6 +38,39 @@ void GeometryEvaluator::init(std::shared_ptr<Scene> scene)
     for (const auto& model : scene->models) {
         AddToEvaluation(model.geometry);
     }
+    
+    scene->vars.setChangeCallback("blending", [this, scene]() {
+        auto geometry = scene->models[0].geometry;
+         for (auto& edit : geometry->getEdits()) {
+            edit.blending = scene->vars.getFloat("blending");
+         }
+        AddToEvaluation(geometry);
+    });
+    
+    scene->vars.setChangeCallback("rounding", [this, scene]() {
+        auto geometry = scene->models[0].geometry;
+        for (auto& edit : geometry->getEdits()) {
+            if (edit.primitiveType == PrimitiveType::ptBox) {
+                edit.primitiveData.w = scene->vars.getFloat("rounding");
+            } else if (edit.primitiveType == PrimitiveType::ptCylinder) {
+                edit.primitiveData.z = scene->vars.getFloat("rounding");
+            } else if (edit.primitiveType == PrimitiveType::ptCone) {
+                edit.primitiveData.w = scene->vars.getFloat("rounding");
+            }
+        }
+        AddToEvaluation(geometry);
+    });
+    
+    // scene->vars.setChangeCallback("blending", [this, scene]() {
+    //     auto geometry = scene->models[0].geometry;
+    //     auto blending = scene->vars.getFloat("blending");
+    //     geometry->getEdit(0).blending = blending;
+    //     AddToEvaluation(geometry);
+    // });
+    
+    // scene->vars.setChangeCallback("d", [this, scene]() {
+    //     AddToEvaluation(scene->models[0].geometry);
+    // });
 }
 
 void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
@@ -50,6 +82,15 @@ void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::
 
 void GeometryEvaluator::onTick(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
 {
+    auto setVar = [&] (string ident) {
+        float val = scene->vars.getFloat(ident);
+        octreeEvaluationProgram.uniform(ident.c_str(), val);
+    };
+    setVar("a");
+    setVar("b");
+    setVar("c");
+    setVar("d");
+    
     evaluateQueue();
 }
 
@@ -90,7 +131,7 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     // uniform: shift and scale SVO to be aligned with BB of the geometry
     const glm::vec4 correctionVector = glm::vec4(geometry.getAABB().center(), geometry.getAABB().longestEdgeSize());
     octreeEvaluationProgram.uniform("correctionVector", correctionVector);
-    octreeEvaluationProgram.uniform("editCount", uint32(geometry.getEdits().size()));
+    octreeEvaluationProgram.uniform("editCount", uint32(geometry.readEdits().size()));
     
     octreeInitiationProgram.uniform("correctionVector", correctionVector);
     
@@ -209,15 +250,14 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
 void GeometryEvaluator::loadEditBuffer(const Geometry& geometry) const
 {
     std::vector<GPUEdit> editsData;
-    editsData.reserve(geometry.getEdits().size());
-    for (auto e : geometry.getEdits()) {
+    editsData.reserve(geometry.readEdits().size());
+    for (auto e : geometry.readEdits()) {
         editsData.push_back({
             e.primitiveType,
             e.operation,
             e.blending,
             0,
-            e.transform.position,
-            0,
+            e.transform.getTransform(),
             e.primitiveData
         });
     }

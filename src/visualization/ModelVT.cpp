@@ -4,6 +4,8 @@
 #include <numeric>
 #include <glm/gtx/string_cast.hpp>
 
+#include <RenderBase/logging.h>
+
 using namespace std;
 using namespace rb;
 
@@ -56,8 +58,8 @@ void ModelVT::prepare(const Scene& scene)
         brickShellProgram.loadStandardCamera(cam);
     }
         
+    transforms.clear();
     for (auto& batch : geometryBatches) {
-        batch.second.transforms.clear();
         batch.second.toRenderNodes.clear();
     }
     
@@ -75,7 +77,7 @@ void ModelVT::prepare(const Scene& scene)
         
         auto& currentBatch = geometryBatches[key];
         
-        currentBatch.transforms.push_back(model.transform.getTransform());
+        transforms.push_back(model.transform.getTransform());
         
         // calculate indices of nodes which will be rendered
         auto toRenderIndices = generateToRenderIndices(model, scene.division);
@@ -84,19 +86,21 @@ void ModelVT::prepare(const Scene& scene)
         }
     }
     
+    if (transformBuffer == nullptr) {
+        transformBuffer = make_unique<gl::Buffer>(transforms, GL_DYNAMIC_DRAW);
+    } else {
+        transformBuffer->setData(transforms);
+    }
+    
     for (auto& [geometryPrt, batch] : geometryBatches) {
         
         // add nodes to be rendered ino
         if (batch.vao == nullptr) {
             batch.vao = make_unique<gl::VertexArray>();
-        
-            batch.transformBuffer = make_unique<gl::Buffer>(batch.transforms, GL_DYNAMIC_DRAW);
             batch.toRenderNodesBuffer = make_unique<gl::Buffer>(batch.toRenderNodes, GL_DYNAMIC_DRAW);
-            
             batch.vao->addAttrib(*batch.toRenderNodesBuffer, 0, 1, GL_UNSIGNED_INT, 2);
             batch.vao->addAttrib(*batch.toRenderNodesBuffer, 1, 1, GL_UNSIGNED_INT, 2, 4);
         } else {
-            batch.transformBuffer->setData(batch.transforms);
             batch.toRenderNodesBuffer->setData(batch.toRenderNodes);
         }
     }
@@ -137,7 +141,7 @@ void ModelVT::render(const Scene& scene)
             );
             
             prg.uniform("brickAtlas", uint32(1));
-            prg.uniform("TranslationsBlock", *batch.transformBuffer, 4);
+            prg.uniform("TranslationsBlock", *transformBuffer, 4);
             
             prg.uniform("brickAtlasScale",     geometryPrt->octree->brickPool->getAtlasScale());
             prg.uniform("brickAtlasVoxelSize", geometryPrt->octree->brickPool->getAtlasVoxelSize());

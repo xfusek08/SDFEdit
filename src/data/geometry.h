@@ -29,15 +29,15 @@ enum PrimitiveType {
 
 enum GeometryOperation {
     opAdd       = 0,
-    opSubstract = 1,
+    opSubtract  = 1,
     opIntersect = 2,
     opPaint     = 3,
 };
 
 struct GeometryEdit {
-    glm::u32 primitiveType;
-    glm::u32 operation;
-    glm::u32 blending;
+    glm::u32  primitiveType;
+    glm::u32  operation;
+    glm::f32  blending;
     Transform transform;     // 7x float TODO: maybe store transform as 4x4 matrix?
     glm::vec4 color;         // 3x float - color value TODO: maybe pack it to 3 bytes (255 ber chanel)
     glm::vec4 primitiveData; // 4x float TODO: maybe store as union depending on primitive type, I dont know how, much data will more complex shapes have to hold.
@@ -56,14 +56,15 @@ struct Geometry {
     std::shared_ptr<SVOctree> octree = nullptr;
     
     bool dirty = true;
-        
+    
     Geometry(glm::f32 resolution = DEFAULT_GEOMETRY_RESOLUTION) : resolution(resolution) {}
     
     void addEdit(GeometryEdit edit);
     void addEdits(const std::vector<GeometryEdit>& edits);
     void clearEdits();
     
-    inline const std::vector<GeometryEdit>& getEdits() const { return edits; }
+    inline const std::vector<GeometryEdit>& readEdits() const { return edits; }
+    inline std::vector<GeometryEdit>& getEdits() { return edits; }
     inline glm::u32 getResolution() const { return resolution; }
     inline AABB getAABB() const { return aabb; }
     

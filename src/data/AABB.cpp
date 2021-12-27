@@ -4,7 +4,7 @@
 AABB AABB::transform(const Transform& tranform) const {
     
     // rotation requres special care to keep BB axes aligned
-    if (tranform.orientation != glm::quat{0,0,0,0}) {
+    if (tranform.orientation != glm::quat({0, 0, 0})) {
         glm::vec4 corners[] = {
             // right side
             { max.x, max.y, max.z, 1.0f },

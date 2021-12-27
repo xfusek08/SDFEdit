@@ -48,7 +48,7 @@ struct Ray {                  // the helper data structure to where store ray ma
 // computation is done in ray-marching space
 vec3 getNormal(vec3 point, float currentDistance) {
     point += vec3(a,b,c);
-    vec2 e = vec2(NORMAL_OFFSET * d, 0);
+    vec2 e = vec2(NORMAL_OFFSET, 0);
     vec3 n = vec3(
         sampleVolume(point + e.xyy),
         sampleVolume(point + e.yxy),

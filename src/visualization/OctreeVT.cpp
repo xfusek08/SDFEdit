@@ -96,7 +96,7 @@ void OctreeVT::prepare(const Scene& scene)
         struct Edit {
             uint32    type;
             uint32    op;
-            uint32    blending;
+            float32   blending;
             uint32    _padding1;
             glm::vec3 pos;
             float     _padding2;

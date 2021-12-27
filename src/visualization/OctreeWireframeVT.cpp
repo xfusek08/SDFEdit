@@ -35,7 +35,9 @@ void OctreeWireframeVT::render(const Scene& scene)
     // NOTE: renders first geometry
     
     const auto geometry = scene.models[0].geometry;
-    vertexArray->bind();
-    vertexArray->addAttrib(*(geometry->octree->vertexBuffer), 0, 4, GL_FLOAT);
-    glDrawArrays(GL_POINTS, 0, geometry->octree->nodeCount);
+    if (geometry->octree != nullptr) {
+        vertexArray->bind();
+        vertexArray->addAttrib(*(geometry->octree->vertexBuffer), 0, 4, GL_FLOAT);
+        glDrawArrays(GL_POINTS, 0, geometry->octree->nodeCount);
+    }
 }
