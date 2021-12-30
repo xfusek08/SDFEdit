@@ -176,15 +176,34 @@ shared_ptr<Scene> prepareShaderSceneData(string fileName)
         return geometry;
     };
     
+    unordered_map<string, Material> materialCache = {};
+    auto getMaterialByName = [&](string materialName) {
+        if (materialCache.find(materialName) != materialCache.end()) {
+            return materialCache[materialName];
+        }
+        
+        Material res = {};
+        if (json["materials"].contains(materialName)) {
+            auto materialJson = json["materials"][materialName];
+            res.color = getVec3(materialJson, "color");
+            res.shininess = getFloat(materialJson, "shininess");
+        }
+        
+        materialCache[materialName] = res;
+        return res;
+    };
+    
     auto scene = make_shared<Scene>();
     scene->models.reserve(json["models"].size());
     for (auto& [key, value] : json["models"].items()) {
         if (value.contains("geometry")) {
             auto model = Model(getGeometryByName(value["geometry"].get<string>()));
             model.transform = getTransform(value);
+            if (value.contains("material")) {
+                model.material = getMaterialByName(value["material"].get<string>());
+            }
             scene->models.push_back(model);
         }
     }
-    
     return scene;
 }

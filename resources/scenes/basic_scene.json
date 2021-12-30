@@ -8,8 +8,11 @@
     "materials": {
         "white": {
             "color": [ 0.78, 0.77, 0.73 ],
-            "specularColor": [ 1.0, 1.0, 1.0 ],
-            "shininess": 70
+            "shininess": 0.5
+        },
+        "black": {
+            "color": [ 0.17, 0.15, 0.15 ],
+            "shininess": 1.9
         }
     },
     "geometries": {
@@ -27,26 +30,176 @@
         ],
         
         "pawnGeometry": [
-            { "type":  "Sphere",   "position": [  0,  0.30,  0.0 ], "radius" : 0.15, "blending": 0.05 },
-            { "type":  "Cone",     "position": [  0, 0.15,  0 ],    "height": 0.1, "radiusBottom": 0.1, "rounding": 0.015, "blending": 0.04  },
-            { "type":  "Cone",     "position": [  0, -0.15,  0 ],   "height": 0.5, "radiusTop": 0.05, "radiusBottom": 0.11, "rounding": 0.02, "blending": 0.03 },
+            { "type":  "Sphere",   "position": [  0,  0.22,  0.0 ], "radius" : 0.12, "blending": 0.05 },
+            { "type":  "Cone",     "position": [  0, 0.09,  0 ],    "height": 0.1, "radiusBottom": 0.1, "rounding": 0.015, "blending": 0.03  },
+            { "type":  "Cone",     "position": [  0, -0.15,  0 ],   "height": 0.4, "radiusTop": 0.05, "radiusBottom": 0.11, "rounding": 0.02, "blending": 0.03 },
             { "type":  "Cylinder", "position": [  0, -0.30,  0 ],   "radius": 0.13, "height": 0.05, "rounding": 0.007, "blending": 0.005 },
             { "type":  "Cone",     "position": [  0, -0.30,  0 ],   "height": 0.3, "radiusBottom": 0.22, "rounding": 0.02, "blending": 0 }
         ],
         
         "bishopGeometry": [
-            { "type":  "Sphere",    "position": [  0, 0.85,  0 ],  "radius" : 0.06 },
-            { "type":  "RoundCone", "position": [  0, 0.65,  0 ],  "height": 0.6, "radiusTop": 0.04, "radiusBottom": 0.14, "rounding": 0.2 },
-            { "type":  "Cone",      "position": [  0, 0.36,  0 ],  "height": 0.1, "radiusBottom": 0.13, "rounding": 0.015, "blending": 0.04  },
-            { "type":  "Cone",      "position": [  0, 0.1,  0 ],   "height": 0.9, "radiusTop": 0.05, "radiusBottom": 0.10, "rounding": 0.02, "blending": 0.02 },
+            { "type":  "Sphere",    "position": [  0, 0.7,  0 ],  "radius" : 0.06 },
+            { "type":  "RoundCone", "position": [  0, 0.5,  0 ],  "height": 0.6, "radiusTop": 0.04, "radiusBottom": 0.14, "rounding": 0.2 },
+            { "type":  "Cone",      "position": [  0, 0.2,  0 ],  "height": 0.1, "radiusBottom": 0.13, "rounding": 0.015, "blending": 0.04  },
+            { "type":  "Cone",      "position": [  0, 0.0,  0 ],   "height": 0.9, "radiusTop": 0.05, "radiusBottom": 0.10, "rounding": 0.02, "blending": 0.02 },
             { "type":  "Cone",      "position": [  0, -0.15,  0 ], "height": 0.5, "radiusTop": 0.05, "radiusBottom": 0.11, "rounding": 0.02, "blending": 0.03 },
             { "type":  "Cylinder",  "position": [  0, -0.30,  0 ], "radius": 0.13, "height": 0.05, "rounding": 0.007, "blending": 0.005 },
             { "type":  "Cone",      "position": [  0, -0.30,  0 ], "height": 0.3, "radiusBottom": 0.22, "rounding": 0.02, "blending": 0 },
-            { "type":  "Box",       "position": [  0.15, 0.85,  0.0 ], "rotation": [0, 0, 30], "dimensions": [ 0.03, 0.35, 0.3], "op": "Sub", "blending": 0.01}
+            { "type":  "Box",       "position": [  0.06, 0.50,  0.0 ], "rotation": [0, 0, -30], "dimensions": [ 0.02, 0.15, 0.15], "op": "Sub", "blending": 0.01}
+        ],
+        
+        "rookGeometry": [
+            { "type":  "Cylinder", "position": [  0, 0.40,  0 ],   "radius": 0.2,                  "height": 0.17,       "rounding": 0.02,     "blending": 0.02 },
+            { "type":  "Box",      "position": [  0, 0.47,  0.0 ], "dimensions": [0.05, 0.1, 0.3], "op": "Sub",          "blending": 0.01 },
+            { "type":  "Box",      "position": [  0, 0.47,  0.0 ], "dimensions": [0.3, 0.1, 0.05], "op": "Sub",          "blending": 0.01 },
+            { "type":  "Cylinder", "position": [  0, 0.3,  0 ],    "radius": 0.15,                 "height": 0.10,       "rounding": 0.02,     "blending": 0.02 },
+            { "type":  "Cone",     "position": [  0, -0.0,  0 ],   "height": 0.7,                  "radiusTop": 0.07,    "radiusBottom": 0.11, "rounding": 0.02, "blending": 0.03 },
+            { "type":  "Cylinder", "position": [  0, -0.30,  0 ],  "radius": 0.13,                 "height": 0.05,       "rounding": 0.007,    "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, -0.30,  0 ],  "height": 0.3,                  "radiusBottom": 0.22, "rounding": 0.02,     "blending": 0 }
+        ],
+        
+        "knightGeometry": [
+            { "type":  "RoundCone", "position": [  0,      0.40,  0.06 ], "rotation": [  130, 0,  0 ], "height": 0.9,                  "radiusTop": 0.05,   "radiusBottom": 0.14 },
+            { "type":  "RoundCone", "position": [  0,      0.24, -0.08 ], "rotation": [  -15, 0,  0 ],   "height": 1.3,                  "radiusTop": 0.065,  "radiusBottom": 0.17, "blending": 0.02},
+            { "type":  "Box",       "position": [  0,      0.25,  0.02 ], "height": 1.4,                "dimensions": [0.10, 0.5, 0.26],  "op": "Intersect",   "blending": 0.01},
+            { "type":  "Box",       "position": [  0.14,   0.20,  0.1 ],  "rotation": [ 0, -17,  2 ],  "dimensions": [0.06, 0.5, 0.3 ], "op": "Sub",         "blending": 0.01},
+            { "type":  "Box",       "position": [  -0.14,  0.20,  0.1 ],  "rotation": [ 0, 17,  -2], "dimensions": [0.06, 0.5, 0.3 ],"op": "Sub",         "blending": 0.01},
+            { "type":  "Cylinder", "position":  [  0,     -0.26,  0 ],    "radius": 0.12,              "height": 0.05,       "rounding": 0.007,    "blending": 0.005 },
+            { "type":  "Cone",     "position":  [  0,     -0.26,  0 ],    "height": 0.3,                "radiusBottom": 0.22, "rounding": 0.02,     "blending": 0 }
+        ],
+        
+        "queenGeometry": [
+            { "type":  "Cone",     "position": [  0, 1.0,  0 ],   "height": 0.50,  "radiusTop": 0.25, "radiusBottom": 0.11, "rounding": 0.02 },
+            { "type":  "Sphere",   "position": [  0, 0.80,  0 ],   "radius" : 0.24, "op": "Intersect" },
+            { "type":  "Cone",     "position": [  0, 0.7,  0 ],  "height": 0.09,   "radiusTop": 0.1, "radiusBottom": 0.17, "rounding": 0.01, "blending": 0.02 },
+            { "type":  "Sphere",   "position": [  0, 1.07,  0 ],  "radius" : 0.06 },
+            { "type":  "Cone",     "position": [  0, 0.5,  0 ],   "height": 1,    "radiusTop": 0.07, "radiusBottom": 0.10, "rounding": 0.02, "blending": 0.02 },
+            { "type":  "Cylinder", "position": [  0, 0.0,  0 ], "radius": 0.13,   "height": 0.05,       "rounding": 0.007,    "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, 0.0,  0 ], "height": 0.3,    "radiusBottom": 0.22, "rounding": 0.02,     "blending": 0 }
+        ],
+        
+        "kingGeometry": [
+            { "type":  "Cone",     "position": [  0, 1.0,  0 ],   "height": 0.50,  "radiusTop": 0.25, "radiusBottom": 0.11, "rounding": 0.02 },
+            { "type":  "Sphere",   "position": [  0, 0.85,  0 ],   "radius" : 0.25, "op": "Intersect" },
+            { "type":  "Cone",     "position": [  0, 0.7,  0 ],  "height": 0.09,   "radiusTop": 0.1, "radiusBottom": 0.17, "rounding": 0.01, "blending": 0.02 },
+            { "type":  "Torus",    "position": [  0, 1.1,  0 ],  "op": "Sub",  "outerRadius": 0.17, "innerRadius": 0.11, "blending": 0.02 },
+            { "type":  "Box",       "position": [  0, 1.08,  0 ], "dimensions": [0.15, 0.03, 0.15], "op": "Sub"},
+            { "type":  "Cone",     "position": [  0, 0.5,  0 ],   "height": 1,    "radiusTop": 0.05, "radiusBottom": 0.10, "rounding": 0.02, "blending": 0.02 },
+            { "type":  "Cylinder", "position": [  0, 0.0,  0 ], "radius": 0.13,   "height": 0.05,       "rounding": 0.007,    "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, 0.0,  0 ], "height": 0.3,    "radiusBottom": 0.22, "rounding": 0.02,     "blending": 0 },
+            { "type":  "Box",       "position": [  0, 1.14,  0 ], "dimensions": [0.04, 0.10, 0.03], "rounding": 0.021, "blending": 0.01},
+            { "type":  "Box",       "position": [  0, 1.14,  0 ], "dimensions": [0.10, 0.04, 0.03], "rounding": 0.021}
+        ],
+        
+        "chessBoard": [
+            { "type":  "Box",      "position": [  0, 0,  0 ], "dimensions": [0.35, 0.2, 0.35]},
+            { "type":  "Cylinder", "position": [  0.35, 0.2,  0 ], "rotation": [  90, 0,  0 ], "radius": 0.05, "height": 0.71, "op": "Sub"},
+            { "type":  "Cylinder", "position": [  -0.35, 0.2,  0 ], "rotation": [  -90, 0,  0 ], "radius": 0.05, "height": 0.71, "op": "Sub"},
+            { "type":  "Cylinder", "position": [  0, 0.2,  0.35 ], "rotation": [  0, 0,  90 ], "radius": 0.05, "height": 0.71, "op": "Sub"},
+            { "type":  "Cylinder", "position": [  0, 0.2,  -0.35 ], "rotation": [  0, 0,  -90 ], "radius": 0.05, "height": 0.71, "op": "Sub"}
         ]
     },
     "models": [
-        { "geometry": "bishopGeometry", "position": [ 0, -0.35, 0 ] },
-        { "geometry": "pawnGeometry", "position": [ 0.6, 0, 0 ]  }
+        { "geometry": "chessBoard",  "position": [     0, -0.2000, 0 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   0.7, -0.2000, 0 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   1.4, -0.2000, 0 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   2.1, -0.2000, 0 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   2.8, -0.2000, 0 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   3.5, -0.2000, 0 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   4.2, -0.2000, 0 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   4.9, -0.2000, 0 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [     0, -0.2000, 0.7 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   0.7, -0.2000, 0.7 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   1.4, -0.2000, 0.7 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   2.1, -0.2000, 0.7 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   2.8, -0.2000, 0.7 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   3.5, -0.2000, 0.7 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   4.2, -0.2000, 0.7 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   4.9, -0.2000, 0.7 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [     0, -0.2000, 1.4 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   0.7, -0.2000, 1.4 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   1.4, -0.2000, 1.4 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   2.1, -0.2000, 1.4 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   2.8, -0.2000, 1.4 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   3.5, -0.2000, 1.4 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   4.2, -0.2000, 1.4 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   4.9, -0.2000, 1.4 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [     0, -0.2000, 2.1 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   0.7, -0.2000, 2.1 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   1.4, -0.2000, 2.1 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   2.1, -0.2000, 2.1 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   2.8, -0.2000, 2.1 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   3.5, -0.2000, 2.1 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   4.2, -0.2000, 2.1 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   4.9, -0.2000, 2.1 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [     0, -0.2000, 2.8 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   0.7, -0.2000, 2.8 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   1.4, -0.2000, 2.8 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   2.1, -0.2000, 2.8 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   2.8, -0.2000, 2.8 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   3.5, -0.2000, 2.8 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   4.2, -0.2000, 2.8 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   4.9, -0.2000, 2.8 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [     0, -0.2000, 3.5 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   0.7, -0.2000, 3.5 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   1.4, -0.2000, 3.5 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   2.1, -0.2000, 3.5 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   2.8, -0.2000, 3.5 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   3.5, -0.2000, 3.5 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   4.2, -0.2000, 3.5 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   4.9, -0.2000, 3.5 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [     0, -0.2000, 4.2 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   0.7, -0.2000, 4.2 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   1.4, -0.2000, 4.2 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   2.1, -0.2000, 4.2 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   2.8, -0.2000, 4.2 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   3.5, -0.2000, 4.2 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   4.2, -0.2000, 4.2 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   4.9, -0.2000, 4.2 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [     0, -0.2000, 4.9 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   0.7, -0.2000, 4.9 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   1.4, -0.2000, 4.9 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   2.1, -0.2000, 4.9 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   2.8, -0.2000, 4.9 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   3.5, -0.2000, 4.9 ], "material": "white" },
+        { "geometry": "chessBoard",  "position": [   4.2, -0.2000, 4.9 ], "material": "black" },
+        { "geometry": "chessBoard",  "position": [   4.9, -0.2000, 4.9 ], "material": "white" },
+
+        { "geometry": "rookGeometry",   "position": [   0, 0.51, 0 ],   "material": "white" },
+        { "geometry": "knightGeometry", "position": [ 0.7, 0.42, 0.2 ], "material": "white" },
+        { "geometry": "bishopGeometry", "position": [ 1.4, 0.53, 0 ],   "material": "white" },
+        { "geometry": "kingGeometry",   "position":  [ 2.1, 0.70, 0 ],   "material": "white" },
+        { "geometry": "queenGeometry",  "position": [ 2.8, 0.70, 0 ],   "material": "white" },
+        { "geometry": "bishopGeometry", "position": [ 3.5, 0.53, 0 ],   "material": "white" },
+        { "geometry": "knightGeometry", "position": [ 4.2, 0.42, 0.2 ], "material": "white" },
+        { "geometry": "rookGeometry",   "position": [ 4.9, 0.51, 0 ],   "material": "white" },
+        
+        { "geometry": "pawnGeometry",   "position": [   0, 0.4, 0.7 ], "material": "white" },
+        { "geometry": "pawnGeometry",   "position": [ 0.7, 0.4, 0.7 ], "material": "white" },
+        { "geometry": "pawnGeometry",   "position": [ 1.4, 0.4, 0.7 ], "material": "white" },
+        { "geometry": "pawnGeometry",   "position": [ 2.1, 0.4, 0.7 ], "material": "white" },
+        { "geometry": "pawnGeometry",   "position": [ 2.8, 0.4, 0.7 ], "material": "white" },
+        { "geometry": "pawnGeometry",   "position": [ 3.5, 0.4, 0.7 ], "material": "white" },
+        { "geometry": "pawnGeometry",   "position": [ 4.2, 0.4, 0.7 ], "material": "white" },
+        { "geometry": "pawnGeometry",   "position": [ 4.9, 0.4, 0.7 ], "material": "white" },
+        
+        
+        { "geometry": "rookGeometry",   "position": [   0, 0.51, 4.9 ], "material": "black" },
+        { "geometry": "knightGeometry", "position": [ 0.7, 0.42, 4.7 ], "material": "black", "rotation": [0, 180, 0] },
+        { "geometry": "bishopGeometry", "position": [ 1.4, 0.53, 4.9 ], "material": "black" },
+        { "geometry": "kingGeometry",   "position": [ 2.1, 0.70, 4.9 ], "material": "black" },
+        { "geometry": "queenGeometry",  "position": [ 2.8, 0.70, 4.9 ], "material": "black" },
+        { "geometry": "bishopGeometry", "position": [ 3.5, 0.53, 4.9 ], "material": "black" },
+        { "geometry": "knightGeometry", "position": [ 4.2, 0.42, 4.7 ], "material": "black", "rotation": [0, 180, 0] },
+        { "geometry": "rookGeometry",   "position": [ 4.9, 0.51, 4.9 ], "material": "black" },
+        
+        { "geometry": "pawnGeometry",   "position": [   0, 0.4, 4.2 ], "material": "black" },
+        { "geometry": "pawnGeometry",   "position": [ 0.7, 0.4, 4.2 ], "material": "black" },
+        { "geometry": "pawnGeometry",   "position": [ 1.4, 0.4, 4.2 ], "material": "black" },
+        { "geometry": "pawnGeometry",   "position": [ 2.1, 0.4, 4.2 ], "material": "black" },
+        { "geometry": "pawnGeometry",   "position": [ 2.8, 0.4, 4.2 ], "material": "black" },
+        { "geometry": "pawnGeometry",   "position": [ 3.5, 0.4, 4.2 ], "material": "black" },
+        { "geometry": "pawnGeometry",   "position": [ 4.2, 0.4, 4.2 ], "material": "black" },
+        { "geometry": "pawnGeometry",   "position": [ 4.9, 0.4, 4.2 ], "material": "black" }
     ]
 }

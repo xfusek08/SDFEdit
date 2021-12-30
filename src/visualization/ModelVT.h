@@ -16,9 +16,8 @@ class ModelVT : public VisualizationTechnique
     public:
     
         ModelVT();
-        /**
-         * This function will evaluate all changed geometries and
-         */
+        
+        void init(std::shared_ptr<Scene> scene) override;
         void prepare(const Scene& scene) override;
         void render(const Scene& scene) override;
         
@@ -37,4 +36,8 @@ class ModelVT : public VisualizationTechnique
         // model transforms are global for all geometries
         std::vector<glm::mat4>  transforms = {};
         std::unique_ptr<rb::gl::Buffer> transformBuffer = nullptr;
+        
+        // temporary color buffer
+        std::vector<Material>  materials = {};
+        std::unique_ptr<rb::gl::Buffer> materialsBuffer = nullptr;
 };

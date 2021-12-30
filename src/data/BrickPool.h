@@ -14,7 +14,7 @@ struct BrickPool {
     std::unique_ptr<rb::gl::Texture3D> brickAtlas = nullptr;
     
     BrickPool(
-        uint32 bricksInOneDimension = 30, // 8 000 bricks cca 16.5 MB (GL_RED), 65.5 MB (GL_RGB32F)
+        uint32 bricksInOneDimension = 16, // 8 000 bricks cca 16.5 MB (GL_RED), 65.5 MB (GL_RGB32F)
         uint32 brickSize            = 8,
         GLenum format               = GL_RED
     );

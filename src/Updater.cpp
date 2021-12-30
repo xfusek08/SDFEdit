@@ -31,7 +31,7 @@ void Updater::onInputChange(shared_ptr<Scene> scene, const input::InputState& in
         system->onInputChange(scene, input, tick);
     }
     
-    if (input.isKeyPressed(GLFW_KEY_SPACE)) {
+    if (input.isKeyPressed(GLFW_KEY_L)) {
         scene->division++;
     }
 }

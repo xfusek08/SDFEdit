@@ -52,6 +52,9 @@ void Gui::init(shared_ptr<Scene> scene)
 
     scene->vars.addFloat("rounding", rounding);
     addVarsLimitsF(scene->vars, "rounding", 0.01, 1.0, 0.01);
+    
+    
+    scene->vars.addBool("showBoxes", showBoxes);
 }
 
 void Gui::prepare(shared_ptr<Scene> scene)

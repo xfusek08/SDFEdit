@@ -15,6 +15,7 @@
 #define HIT_DISTANCE  0.01 // Distance from surface considered as hit.
 
 uniform vec3 cameraPosition;
+uniform mat4 viewProjection;
 
 uniform float a;
 uniform float b;
@@ -25,6 +26,8 @@ uniform float d;
 smooth in vec3 fragPos;       // Fragment position in world space toward it will ray be casted from the camera
 in mat4 brickTransformMatrix; // Matrix transforming position of fragment from world space to local ray-marcher space
 in vec3 brickCameraPosition;  // Position of camera prepared in ray-marcher space
+flat in vec3  color;
+flat in float shininess;
 
 // outputs
 out vec4 fColor; // calculated fragment color
@@ -65,9 +68,9 @@ vec3 toLocal(vec3 pos) {
 vec4 getHitColor(vec3 pos, vec3 normal) {
     vec3 lightPos = toLocal(vec3(100, 100, 100));
     vec3 lightColor = vec3(1, 1, 1);
-    vec3 ambient = vec3(1, 1, 1) * 0.3;
-    vec3 objectColor = vec3(1, 0.4, 0.2);
-    float specularStrength = 0.5;
+    vec3 ambient = vec3(1, 1, 1) * 0.25;
+    vec3 objectColor = color;
+    float specularStrength = shininess;
     
     // diffuse
     vec3 lightDir = normalize(lightPos);
@@ -123,6 +126,12 @@ void main() {
         
         if (distToVolume <= HIT_DISTANCE) {
             fColor = getHitColor(actPosition, getNormal(actPosition, distToVolume));
+            
+            // see: https://stackoverflow.com/questions/53650693/opengl-impostor-sphere-problem-when-calculating-the-depth-value
+            vec4 c = viewProjection * inverse(brickTransformMatrix) * vec4(actPosition, 1);
+            float ndcDepth = c.z / c.w;
+            gl_FragDepth = ((gl_DepthRange.diff * ndcDepth) + gl_DepthRange.near + gl_DepthRange.far) / 2.0;
+            
             return;
         }
         ray.dist += distToVolume; // make step into volume

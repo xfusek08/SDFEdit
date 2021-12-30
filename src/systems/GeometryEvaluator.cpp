@@ -3,6 +3,8 @@
 
 #include <unordered_set>
 
+#include <RenderBase/asserts.h>
+
 using namespace std;
 using namespace rb;
 
@@ -38,39 +40,6 @@ void GeometryEvaluator::init(std::shared_ptr<Scene> scene)
     for (const auto& model : scene->models) {
         AddToEvaluation(model.geometry);
     }
-    
-    scene->vars.setChangeCallback("blending", [this, scene]() {
-        auto geometry = scene->models[0].geometry;
-         for (auto& edit : geometry->getEdits()) {
-            edit.blending = scene->vars.getFloat("blending");
-         }
-        AddToEvaluation(geometry);
-    });
-    
-    scene->vars.setChangeCallback("rounding", [this, scene]() {
-        auto geometry = scene->models[0].geometry;
-        for (auto& edit : geometry->getEdits()) {
-            if (edit.primitiveType == PrimitiveType::ptBox) {
-                edit.primitiveData.w = scene->vars.getFloat("rounding");
-            } else if (edit.primitiveType == PrimitiveType::ptCylinder) {
-                edit.primitiveData.z = scene->vars.getFloat("rounding");
-            } else if (edit.primitiveType == PrimitiveType::ptCone) {
-                edit.primitiveData.w = scene->vars.getFloat("rounding");
-            }
-        }
-        AddToEvaluation(geometry);
-    });
-    
-    // scene->vars.setChangeCallback("blending", [this, scene]() {
-    //     auto geometry = scene->models[0].geometry;
-    //     auto blending = scene->vars.getFloat("blending");
-    //     geometry->getEdit(0).blending = blending;
-    //     AddToEvaluation(geometry);
-    // });
-    
-    // scene->vars.setChangeCallback("d", [this, scene]() {
-    //     AddToEvaluation(scene->models[0].geometry);
-    // });
 }
 
 void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
@@ -98,6 +67,7 @@ void GeometryEvaluator::evaluateQueue()
 {
     for (auto geometry : toEvaluateQueue) {
         geometry->octree = evaluateGeometry(*geometry);
+        RB_DEBUG("geometry " << geometry.get() << " has new octree");
     }
     toEvaluateQueue.clear();
 }
@@ -238,6 +208,12 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     RB_DEBUG("Geometry evaluated into: " << octree->nodeCount << " nodes and " << octree->brickPool->brickCount << " bricks");
     
     // save evaluated octree to the geometry
+    
+    // RB_ASSERT_MSG(octree, "Cannot render unevaluated geometry.");
+    // RB_ASSERT_MSG(octree->nodeBuffer, "Geometry is missing a node buffer.");
+    // RB_ASSERT_MSG(octree->nodeDataBuffer, "Geometry is missing a node data buffer.");
+    // RB_ASSERT_MSG(octree->vertexBuffer, "Geometry is missing a node vertex buffer.");
+            
     return octree;
 }
 

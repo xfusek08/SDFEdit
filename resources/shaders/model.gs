@@ -13,12 +13,16 @@ uniform float d;
 // data computed in vertex shader
 in mat4  transformMatrices[];
 in vec3  brickAtlasShifts[];
+in vec3  colors[];
+in float shininesses[];
 
 // various pre computed values needed by fragment shader - brick marcher
 smooth out vec3 fragPos;
 flat out mat4   brickTransformMatrix;
 flat out vec3   brickCameraPosition;
 flat out vec3   brickAtlasShift;
+flat out vec3   color;
+flat out float  shininess;
 
 // F - FRONT | T - TOP  | L - left
 // B - Back  | D - Down | R - Right
@@ -66,6 +70,8 @@ void main() {
     brickTransformMatrix = scale(brickInvertedSize) * translate(brickShift) * inverse(transformMatrix);
     brickCameraPosition  = (brickTransformMatrix * vec4(cameraPosition, 1)).xyz;
     brickAtlasShift      = brickAtlasShifts[0];
+    color                = colors[0];
+    shininess            = shininesses[0];
     
     vec4  worldPos; // tmp register
     #define EMIT_STRIP_VERTEX(shift) \

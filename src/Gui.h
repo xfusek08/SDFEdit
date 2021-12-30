@@ -27,4 +27,6 @@ class Gui
         
         float32 blending = 0;
         float32 rounding = 0;
+        
+        bool showBoxes = false;
 };

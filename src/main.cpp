@@ -62,7 +62,7 @@ class Application : public app::BasicOpenGLApplication
         
         Camera cam = Camera({0, 0, 10});
         cam.setAspectRatio(float(window->getWidth()) / float(window->getHeight()));
-        scene->cameraController = make_unique<OrbitCameraController>(cam);
+        scene->cameraController = make_unique<FreeCameraController>(cam);
         
         // // Preparing the test geometry
         // // ----------------------
@@ -134,8 +134,18 @@ class Application : public app::BasicOpenGLApplication
             return true;
         }
         
-        // if "T" is pressed - reload scene from file
         if (input.isKeyPressed(GLFW_KEY_T)) {
+            scene->shouldReload = true;
+        }
+        
+        updater->onInputChange(scene, input, tick);
+        
+        return false;
+    }
+    
+    bool onTick(const input::InputState& input, const timing::TimeStep& tick) override
+    {
+        if (scene->shouldReload) {
             auto newScene = prepareShaderSceneData(RESOURCE_SCENES_BASIC_SCENE_JSON);
             newScene->cameraController = move(scene->cameraController);
             newScene->division = scene->division;
@@ -143,26 +153,19 @@ class Application : public app::BasicOpenGLApplication
             gui->init(scene);
             renderer->init(scene);
             updater->init(scene);
+            scene->shouldReload = false;
         }
         
-        updater->onInputChange(scene, input, tick);
-        gui->prepare(scene);
-        return false;
-    }
-    
-    bool onTick(const input::InputState& input, const timing::TimeStep& tick) override
-    {
         updater->onTick(scene, input, tick);
         return false;
     }
     
     void draw() override
     {
+        gui->prepare(scene);
         renderer->prepare(*scene);
         renderer->render(*scene);
-        
         gui->render(*scene);
-        
         scene->cameraController->getCamera().dirtyFlag = false;
     }
 };

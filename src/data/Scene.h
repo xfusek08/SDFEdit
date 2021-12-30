@@ -19,6 +19,7 @@ struct Scene
     
     // debugging data
     uint32 division = 0;
+    bool shouldReload = false;
     
     vars::Vars vars; // NOTE temporary for debugging purposes until custom gui with ECS is implementred
 };

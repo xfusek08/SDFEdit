@@ -4,7 +4,7 @@
 #include <numeric>
 #include <glm/gtx/string_cast.hpp>
 
-#include <RenderBase/logging.h>
+#include <RenderBase/asserts.h>
 
 using namespace std;
 using namespace rb;
@@ -50,6 +50,11 @@ ModelVT::ModelVT()
     )
 {}
 
+void ModelVT::init(shared_ptr<Scene> scene)
+{
+    geometryBatches.clear();
+}
+
 void ModelVT::prepare(const Scene& scene)
 {
     auto cam = scene.cameraController->getCamera();
@@ -59,6 +64,7 @@ void ModelVT::prepare(const Scene& scene)
     }
         
     transforms.clear();
+    materials.clear();
     for (auto& batch : geometryBatches) {
         batch.second.toRenderNodes.clear();
     }
@@ -71,13 +77,14 @@ void ModelVT::prepare(const Scene& scene)
         const auto  key   = model.geometry.get();
         
         if (!model.geometry->octree) {
-            RB_WARNING("geometry of model " << i << " is not evaluated");
+            RB_WARNING("geometry of model " << i << " is not evaluated .. skipping");
             continue;
         }
         
         auto& currentBatch = geometryBatches[key];
         
         transforms.push_back(model.transform.getTransform());
+        materials.push_back(model.material);
         
         // calculate indices of nodes which will be rendered
         auto toRenderIndices = generateToRenderIndices(model, scene.division);
@@ -88,12 +95,13 @@ void ModelVT::prepare(const Scene& scene)
     
     if (transformBuffer == nullptr) {
         transformBuffer = make_unique<gl::Buffer>(transforms, GL_DYNAMIC_DRAW);
+        materialsBuffer = make_unique<gl::Buffer>(materials, GL_DYNAMIC_DRAW);
     } else {
         transformBuffer->setData(transforms);
+        materialsBuffer->setData(materials);
     }
     
     for (auto& [geometryPrt, batch] : geometryBatches) {
-        
         // add nodes to be rendered ino
         if (batch.vao == nullptr) {
             batch.vao = make_unique<gl::VertexArray>();
@@ -119,7 +127,7 @@ void ModelVT::render(const Scene& scene)
     auto render = [&](gl::Program& prg, uint cnt = 0) {
         prg.use();
         for (auto const& [geometryPrt, batch] : geometryBatches) {
-            
+
             // attach buffers specific for current geometry/batch
             batch.vao->bind();
             geometryPrt->octree->nodeBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 1);
@@ -142,6 +150,7 @@ void ModelVT::render(const Scene& scene)
             
             prg.uniform("brickAtlas", uint32(1));
             prg.uniform("TranslationsBlock", *transformBuffer, 4);
+            prg.uniform("MaterialBlock", *materialsBuffer, 5);
             
             prg.uniform("brickAtlasScale",     geometryPrt->octree->brickPool->getAtlasScale());
             prg.uniform("brickAtlasVoxelSize", geometryPrt->octree->brickPool->getAtlasVoxelSize());
@@ -161,8 +170,11 @@ void ModelVT::render(const Scene& scene)
         }
     };
     
-    render(renderProgram);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    // render(brickShellProgram);
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (scene.vars.getBool("showBoxes")) {
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        render(brickShellProgram);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    } else {
+        render(renderProgram);
+    }
 }

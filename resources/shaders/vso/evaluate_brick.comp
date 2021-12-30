@@ -107,7 +107,7 @@ shared uint divide; // place in group-shared memory into which voting whenever n
 shared uint brickIndex;
 
 // SD Function of point to edit
-#define TRANSFORM_POS(edit, pos) (edit.transform * vec4(pos + correctionVector.xyz, 1)).xyz;
+#define TRANSFORM_POS(edit, pos) (inverse(edit.transform) * vec4(pos + correctionVector.xyz, 1)).xyz;
 
 float sdSphere(Edit edit, vec3 position) {
     vec3 p = TRANSFORM_POS(edit, position);
@@ -292,7 +292,7 @@ void main() {
     float sdfValue           = getSDFValue(voxelCenter);
     
     // vote if voxel intersects sdf surface
-    float voxelSize = SQRT_3 * (fullStep * nodeVertex.w) * 0.5;
+    float voxelSize = SQRT_3 * (fullStep * nodeVertex.w) * 0.4;
     if (abs(sdfValue) < voxelSize) {
         atomicAdd(divide, 1);
     }
