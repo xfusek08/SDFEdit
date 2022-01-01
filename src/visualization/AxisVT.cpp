@@ -44,7 +44,7 @@ AxisVT::AxisVT() :
     program.uniform("scaleFactor", 10);
 }
 
-void AxisVT::prepare(const Scene& scene)
+void AxisVT::prepare(Scene& scene)
 {
     // camera update
     auto cam = scene.cameraController->getCamera();
@@ -53,7 +53,7 @@ void AxisVT::prepare(const Scene& scene)
     }
 }
 
-void AxisVT::render(const Scene& scene)
+void AxisVT::render(Scene& scene)
 {
     glEnable(GL_DEPTH_TEST);
     

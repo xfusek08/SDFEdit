@@ -14,7 +14,7 @@ OctreeWireframeVT::OctreeWireframeVT() :
     vertexArray = make_unique<gl::VertexArray>();
 }
 
-void OctreeWireframeVT::prepare(const Scene& scene)
+void OctreeWireframeVT::prepare(Scene& scene)
 {
     // camera update
     auto cam = scene.cameraController->getCamera();
@@ -23,7 +23,7 @@ void OctreeWireframeVT::prepare(const Scene& scene)
     }
 }
 
-void OctreeWireframeVT::render(const Scene& scene)
+void OctreeWireframeVT::render(Scene& scene)
 {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);

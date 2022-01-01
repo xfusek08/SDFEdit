@@ -19,7 +19,7 @@ AABB AABB::transform(const Transform& tranform) const {
             { min.x, min.y, min.z, 1.0f },
         };
         
-        auto transformMatrix = glm::inverse(tranform.getTransform());
+        auto transformMatrix = tranform.getTransform();
         
         AABB bbRes = {};
         for (int i =0; i < 8; ++i) {

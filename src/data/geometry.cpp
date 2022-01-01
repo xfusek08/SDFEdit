@@ -5,7 +5,8 @@
 void Geometry::addEdit(GeometryEdit edit)
 {
     edits.push_back(edit);
-    aabb = AABB::add(aabb, primitives::computeAABB(edit));
+    auto toadd =  primitives::computeAABB(edit);
+    aabb = AABB::add(aabb, toadd);
 }
 
 void Geometry::addEdits(const std::vector<GeometryEdit>& edits)

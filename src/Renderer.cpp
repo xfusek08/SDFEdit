@@ -16,7 +16,7 @@ void Renderer::init(shared_ptr<Scene> scene)
     }
 }
 
-void Renderer::prepare(const Scene& scene)
+void Renderer::prepare(Scene& scene)
 {
     for (auto vt : vts) {
         vt->prepare(scene);
@@ -26,7 +26,7 @@ void Renderer::prepare(const Scene& scene)
     // under a mutex.
 }
 
-void Renderer::render(const Scene& scene)
+void Renderer::render(Scene& scene)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     for (auto vt : vts) {

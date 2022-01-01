@@ -14,8 +14,8 @@ class AxisVT : public VisualizationTechnique
     public:
         AxisVT();
         
-        void prepare(const Scene& scene) override;
-        void render(const Scene& scene) override;
+        void prepare(Scene& scene) override;
+        void render(Scene& scene) override;
 
     private:
         rb::gl::Program program;

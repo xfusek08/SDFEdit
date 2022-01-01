@@ -1,0 +1,116 @@
+{
+    "lights": [
+        {
+            "position": [100, 100, 100],
+            "color": [1, 1, 1]
+        }
+    ],
+    "materials": {
+        "white": {
+            "color": [ 0.78, 0.77, 0.73 ],
+            "shininess": 0.5
+        },
+        "black": {
+            "color": [ 0.17, 0.15, 0.15 ],
+            "shininess": 1.9
+        }
+    },
+    "geometries": {
+        "Sphere":    [ { "type": "Sphere" } ],
+        "Capsule":   [ { "type": "Capsule" } ],
+        "Torus":     [ { "type": "Torus", "outerRadius": 0.5 } ],
+        "Box":       [ { "type": "Box", "rounding": 0.2, "rotation": [ 45, 45, 0 ] } ],
+        "Cylinder":  [ { "type": "Cylinder" } ],
+        "Cone":      [ { "type": "Cone" } ],
+        "RoundCone": [ { "type": "RoundCone" } ],
+        
+        "testGeometry": [
+            { "type": "Cone" },
+            { "type": "Box", "op": "Sub", "position": [0, 2, 0] }
+        ],
+        
+        "pawnGeometry": [
+            { "type":  "Sphere",   "position": [  0,  0.22,  0.0 ], "radius" : 0.12, "blending": 0.05 },
+            { "type":  "Cone",     "position": [  0, 0.09,  0 ],    "height": 0.1, "radiusTop": 0.05,  "radiusBottom": 0.1, "rounding": 0.015, "blending": 0.02  },
+            { "type":  "Cone",     "position": [  0, -0.15,  0 ],   "height": 0.4, "radiusTop": 0.05, "radiusBottom": 0.11, "rounding": 0.02, "blending": 0.03 },
+            { "type":  "Cylinder", "position": [  0, -0.30,  0 ],   "radius": 0.13, "height": 0.15, "rounding": 0.007, "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, -0.30,  0 ],   "height": 0.15, "radiusTop": 0.11, "radiusBottom": 0.2, "rounding": 0.02, "blending": 0 }
+        ],
+        
+        "bishopGeometry": [
+            { "type":  "Sphere",    "position": [  0, 0.6,  0 ],  "radius" : 0.06 },
+            { "type":  "RoundCone", "position": [  0, 0.4,  0 ],  "height": 0.4, "radiusTop": 0.035, "radiusBottom": 0.13, "rounding": 0.2 },
+            { "type":  "Cone",     "position": [  0, 0.2,  0 ],    "height": 0.1, "radiusTop": 0.05,  "radiusBottom": 0.1, "rounding": 0.015, "blending": 0.02  },
+            { "type":  "Cone",      "position": [  0, 0.0,  0 ],   "height": 0.6, "radiusTop": 0.05, "radiusBottom": 0.10, "rounding": 0.02, "blending": 0.02 },
+            
+            { "type":  "Cylinder", "position": [  0, -0.30,  0 ],   "radius": 0.13, "height": 0.15, "rounding": 0.007, "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, -0.30,  0 ],   "height": 0.15, "radiusTop": 0.11, "radiusBottom": 0.2, "rounding": 0.02, "blending": 0 },
+            { "type":  "Box",       "position": [  0.03, 0.45,  0.0 ], "rotation": [0, 0, -30], "dimensions": [ 0.03, 0.2, 0.3], "op": "Sub", "blending": 0.01}
+        ],
+        
+        "rookGeometry": [
+            { "type":  "Cylinder", "position": [  0, 0.40,  0 ],   "radius": 0.2,                  "height": 0.17,       "rounding": 0.02,     "blending": 0.02 },
+            { "type":  "Box",      "position": [  0, 0.47,  0.0 ], "dimensions": [0.1, 0.2, 0.6], "op": "Sub",          "blending": 0.01 },
+            { "type":  "Box",      "position": [  0, 0.47,  0.0 ], "dimensions": [0.6, 0.2, 0.1], "op": "Sub",          "blending": 0.01 },
+            { "type":  "Cylinder", "position": [  0, 0.3,  0 ],    "radius": 0.15,                 "height": 0.10,       "rounding": 0.02,     "blending": 0.02 },
+            { "type":  "Cone",     "position": [  0, -0.0,  0 ],   "height": 0.7,                  "radiusTop": 0.07,    "radiusBottom": 0.11, "rounding": 0.02, "blending": 0.03 },
+            { "type":  "Cylinder", "position": [  0, -0.30,  0 ],   "radius": 0.13, "height": 0.15, "rounding": 0.007, "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, -0.30,  0 ],   "height": 0.15, "radiusTop": 0.11, "radiusBottom": 0.2, "rounding": 0.02, "blending": 0 }
+        ],
+        
+        "knightGeometry": [
+            { "type":  "RoundCone", "position": [  0, 0.4, -0.055 ],    "rotation": [  -15, 0,  0 ], "height": 0.7, "radiusTop": 0.06,   "radiusBottom": 0.15 },
+            { "type":  "RoundCone", "position": [  0, 0.65, 0 ],         "rotation": [  120, 0,  0 ],   "height": 0.50, "radiusTop": 0.05,  "radiusBottom": 0.13, "blending": 0.02},
+            { "type":  "Box",       "position": [  0, 0.5,  -0.01 ],     "height": 1.4, "dimensions": [0.2, 0.9, 0.6],  "op": "Intersect",   "blending": 0.01},
+            { "type":  "Box",       "position": [  0.1,   0.44,  0.09 ], "rotation": [ 0, -18,  2 ],  "dimensions": [0.06, 0.7, 0.3 ], "op": "Sub", "blending": 0.01},
+            { "type":  "Box",       "position": [  -0.1,   0.44,  0.09 ], "rotation": [ 0, 18,  -2 ],  "dimensions": [0.06, 0.7, 0.3 ], "op": "Sub", "blending": 0.01},
+            { "type":  "Cylinder",  "position": [  0, 0,  0 ],   "radius": 0.13, "height": 0.15, "rounding": 0.007, "blending": 0.005 },
+            { "type":  "Cone",      "position": [  0, 0,  0 ],   "height": 0.15, "radiusTop": 0.11, "radiusBottom": 0.2, "rounding": 0.02, "blending": 0 }
+        ],
+
+        "knightGeometry2": [
+            { "type":  "RoundCone", "position": [  0,      0.40,  0.06 ], "rotation": [  130, 0,  0 ], "height": 0.9,                  "radiusTop": 0.07,   "radiusBottom": 0.14 },
+            { "type":  "RoundCone", "position": [  0,      0.24, -0.08 ], "rotation": [  -15, 0,  0 ],   "height": 1.3,                  "radiusTop": 0.065,  "radiusBottom": 0.17, "blending": 0.02},
+            { "type":  "Box",       "position": [  0,      0.25,  0.02 ], "height": 1.4,                "dimensions": [0.10, 0.5, 0.26],  "op": "Intersect",   "blending": 0.01},
+            { "type":  "Box",       "position": [  0.14,   0.20,  0.1 ],  "rotation": [ 0, -17,  2 ],  "dimensions": [0.06, 0.5, 0.3 ], "op": "Sub",         "blending": 0.01},
+            { "type":  "Box",       "position": [  -0.14,  0.20,  0.1 ],  "rotation": [ 0, 17,  -2], "dimensions": [0.06, 0.5, 0.3 ],"op": "Sub",         "blending": 0.01},
+            { "type":  "Cylinder", "position": [  0, -0.30,  0 ],   "radius": 0.13, "height": 0.15, "rounding": 0.007, "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, -0.30,  0 ],   "height": 0.15, "radiusTop": 0.11, "radiusBottom": 0.2, "rounding": 0.02, "blending": 0 }
+        ],
+
+        "queenGeometry": [
+            { "type":  "Cone",     "position": [  0, 1.0,  0 ],   "height": 0.50,  "radiusTop": 0.24, "radiusBottom": 0.11, "rounding": 0.02 },
+            { "type":  "Sphere",   "position": [  0, 0.75,  0 ],   "radius" : 0.22, "op": "Intersect" },
+            { "type":  "Cone",     "position": [  0, 0.7,  0 ],  "height": 0.09,   "radiusTop": 0.1, "radiusBottom": 0.14, "rounding": 0.01, "blending": 0.02 },
+            { "type":  "Sphere",   "position": [  0, 1.01,  0 ],  "radius" : 0.06 },
+            { "type":  "Cone",     "position": [  0, 0.5,  0 ],   "height": 0.9,    "radiusTop": 0.07, "radiusBottom": 0.10, "rounding": 0.02, "blending": 0.02 },
+            { "type":  "Cylinder", "position": [  0, 0,  0 ],   "radius": 0.13, "height": 0.15, "rounding": 0.007, "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, 0,  0 ],   "height": 0.15, "radiusTop": 0.11, "radiusBottom": 0.2, "rounding": 0.02, "blending": 0 }
+        ],
+        
+        "kingGeometry": [
+            { "type":  "Cone",     "position": [  0, 1.0,  0 ],   "height": 0.50,  "radiusTop": 0.25, "radiusBottom": 0.11, "rounding": 0.02 },
+            { "type":  "Sphere",   "position": [  0, 0.85,  0 ],   "radius" : 0.25, "op": "Intersect" },
+            { "type":  "Cone",     "position": [  0, 0.7,  0 ],  "height": 0.09,   "radiusTop": 0.1, "radiusBottom": 0.14, "rounding": 0.01, "blending": 0.02 },
+            { "type":  "Torus",    "position": [  0, 1.1,  0 ],  "op": "Sub",  "outerRadius": 0.17, "innerRadius": 0.11, "blending": 0.02 },
+            { "type":  "Cone",     "position": [  0, 0.5,  0 ],   "height": 1,    "radiusTop": 0.05, "radiusBottom": 0.10, "rounding": 0.02, "blending": 0.02 },
+            { "type":  "Cylinder", "position": [  0, 0,  0 ],   "radius": 0.13, "height": 0.15, "rounding": 0.007, "blending": 0.005 },
+            { "type":  "Cone",     "position": [  0, 0,  0 ],   "height": 0.15, "radiusTop": 0.11, "radiusBottom": 0.2, "rounding": 0.02, "blending": 0 },
+            { "type":  "Box",       "position": [  0, 1.08,  0 ], "dimensions": [0.3, 0.06, 0.3], "op": "Sub"},
+            { "type":  "Box",       "position": [  0, 1.12,  0 ], "dimensions": [0.07, 0.21, 0.04], "rounding": 0.025, "blending": 0.01},
+            { "type":  "Box",       "position": [  0, 1.14,  0 ], "dimensions": [0.17, 0.07, 0.04], "rounding": 0.025}
+        
+        ],
+        
+        "chessBoard": [
+            { "type":  "Box",      "position": [  0, 0,  0 ], "dimensions": [0.7, 0.4, 0.7]},
+            { "type":  "Cylinder", "position": [  0.35, 0.2,  0 ], "rotation": [  90, 0,  0 ], "radius": 0.05, "height": 0.71, "op": "Sub"},
+            { "type":  "Cylinder", "position": [  -0.35, 0.2,  0 ], "rotation": [  -90, 0,  0 ], "radius": 0.05, "height": 0.71, "op": "Sub"},
+            { "type":  "Cylinder", "position": [  0, 0.2,  0.35 ], "rotation": [  0, 0,  90 ], "radius": 0.05, "height": 0.71, "op": "Sub"},
+            { "type":  "Cylinder", "position": [  0, 0.2,  -0.35 ], "rotation": [  0, 0,  -90 ], "radius": 0.05, "height": 0.71, "op": "Sub"}
+        ]
+    },
+    "models": [
+        { "geometry": "knightGeometry", "position": [ 0, 0.0, 0 ], "material": "white" }
+    ]
+}

@@ -18,8 +18,8 @@ class ModelVT : public VisualizationTechnique
         ModelVT();
         
         void init(std::shared_ptr<Scene> scene) override;
-        void prepare(const Scene& scene) override;
-        void render(const Scene& scene) override;
+        void prepare(Scene& scene) override;
+        void render(Scene& scene) override;
         
     private:
     

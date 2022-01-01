@@ -5,6 +5,8 @@
 
 #include <RenderBase/asserts.h>
 
+#include <imguiVars/addVarsLimits.h>
+
 using namespace std;
 using namespace rb;
 
@@ -40,6 +42,8 @@ void GeometryEvaluator::init(std::shared_ptr<Scene> scene)
     for (const auto& model : scene->models) {
         AddToEvaluation(model.geometry);
     }
+    scene->vars->addOrGet<uint32>("division", 0);
+    addVarsLimitsU(*scene->vars, "division", 0, maxSubdivisions, 1);
 }
 
 void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
@@ -51,15 +55,6 @@ void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::
 
 void GeometryEvaluator::onTick(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
 {
-    auto setVar = [&] (string ident) {
-        float val = scene->vars.getFloat(ident);
-        octreeEvaluationProgram.uniform(ident.c_str(), val);
-    };
-    setVar("a");
-    setVar("b");
-    setVar("c");
-    setVar("d");
-    
     evaluateQueue();
 }
 
@@ -98,11 +93,11 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     editBuffer->bindBase(GL_SHADER_STORAGE_BUFFER, 4);
     octree->brickPool->bind(1, GL_WRITE_ONLY);
 
-    // uniform: shift and scale SVO to be aligned with BB of the geometry
+    // uniform: shift and scale SVO to be aligned with BB of the geometry`
     const glm::vec4 correctionVector = glm::vec4(geometry.getAABB().center(), geometry.getAABB().longestEdgeSize());
     octreeEvaluationProgram.uniform("correctionVector", correctionVector);
     octreeEvaluationProgram.uniform("editCount", uint32(geometry.readEdits().size()));
-    
+    octreeEvaluationProgram.uniform("bricksInOneDimension", octree->brickPool->bricksInOneDimension);
     octreeInitiationProgram.uniform("correctionVector", correctionVector);
     
     // Run evaluation algorithm
@@ -227,7 +222,7 @@ void GeometryEvaluator::loadEditBuffer(const Geometry& geometry) const
 {
     std::vector<GPUEdit> editsData;
     editsData.reserve(geometry.readEdits().size());
-    for (auto e : geometry.readEdits()) {
+    for (auto& e : geometry.readEdits()) {
         editsData.push_back({
             e.primitiveType,
             e.operation,

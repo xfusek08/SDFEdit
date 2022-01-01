@@ -2,8 +2,11 @@
 #include <data/Scene.h>
 #include <data/primitives.h>
 
+#include <imguiVars/addVarsLimits.h>
+
 #include <RenderBase/tools/random.h>
 #include <RenderBase/application.h>
+#include <RenderBase/tools/utils.h>
 #include <RenderBase/logging.h>
 
 #include <glm/gtx/string_cast.hpp>
@@ -36,13 +39,30 @@ class Application : public app::BasicOpenGLApplication
     unique_ptr<Renderer> renderer;
     unique_ptr<Gui>      gui;
     
+    vector<const char*> sceneNames = {
+        RESOURCE_SCENES_BASIC_SCENE_JSON,
+        RESOURCE_SCENES_CHESS_BOARD_JSON,
+        RESOURCE_SCENES_KNIGHT_TEST_JSON
+    };
+    
+    enum Scenes {
+        a,b, c
+    };
+
     bool init() override
     {
         // App general settings
         // --------------------
         
-        scene = prepareShaderSceneData(RESOURCE_SCENES_BASIC_SCENE_JSON);
+        scene = prepareShaderSceneData(sceneNames[0]);
         // scene = make_shared<Scene>();
+        
+        // scene switching
+        scene->vars->addEnum<Scenes>("scene", a);
+        addEnumValues<Scenes>(*scene->vars, rb::utils::genRange<int32_t>(0, sceneNames.size(), 1), sceneNames);
+        scene->vars->setChangeCallback("scene", [&]() {
+            *scene->vars->addOrGet<const char*>("reloadTo", nullptr) = sceneNames[*scene->vars->get<Scenes>("scene")];
+        });
         
         updater = make_unique<Updater>(SystemArray{
             make_shared<GeometryEvaluator>(),
@@ -50,12 +70,11 @@ class Application : public app::BasicOpenGLApplication
         
         renderer = make_unique<Renderer>(VTArray{
             make_shared<ModelVT>(),
-            // make_shared<OctreeWireframeVT>(),
+            make_shared<OctreeWireframeVT>(),
             make_shared<AxisVT>(),
         });
         
         gui = make_unique<Gui>(*window);
-        
         
         // Camera Set up
         // -------------
@@ -134,10 +153,6 @@ class Application : public app::BasicOpenGLApplication
             return true;
         }
         
-        if (input.isKeyPressed(GLFW_KEY_T)) {
-            scene->shouldReload = true;
-        }
-        
         updater->onInputChange(scene, input, tick);
         
         return false;
@@ -145,15 +160,16 @@ class Application : public app::BasicOpenGLApplication
     
     bool onTick(const input::InputState& input, const timing::TimeStep& tick) override
     {
-        if (scene->shouldReload) {
-            auto newScene = prepareShaderSceneData(RESOURCE_SCENES_BASIC_SCENE_JSON);
+        auto reloadTo = scene->vars->addOrGet<const char*>("reloadTo", nullptr);
+        if (*reloadTo != nullptr) {
+            auto newScene = prepareShaderSceneData(*reloadTo);
             newScene->cameraController = move(scene->cameraController);
-            newScene->division = scene->division;
+            newScene->vars = move(scene->vars);
             scene = newScene;
             gui->init(scene);
             renderer->init(scene);
             updater->init(scene);
-            scene->shouldReload = false;
+            *reloadTo = nullptr;
         }
         
         updater->onTick(scene, input, tick);

@@ -111,23 +111,22 @@ shared_ptr<Scene> prepareShaderSceneData(string fileName)
                         case PrimitiveType::ptSphere: geometry->addEdit(primitives::Sphere::createEdit(
                             operation,
                             transform,
-                            getFloat(editJson, "radius", 1.0),
+                            getFloat(editJson, "radius", 0.5),
                             rb::colors::white,
                             blending
                         )); break;
                         case PrimitiveType::ptCapsule: geometry->addEdit(primitives::Capsule::createEdit(
                             operation,
                             transform,
-                            getFloat(editJson, "width",  0.25),
+                            getFloat(editJson, "width",  0.5),
                             getFloat(editJson, "height", 1.0),
-                            getFloat(editJson, "radius", 0.25),
                             rb::colors::white,
                             blending
                         )); break;
                         case PrimitiveType::ptTorus: geometry->addEdit(primitives::Torus::createEdit(
                             operation,
                             transform,
-                            getFloat(editJson, "outerRadius", 2.5),
+                            getFloat(editJson, "outerRadius", 0.5),
                             getFloat(editJson, "innerRadius", 0.25),
                             rb::colors::white,
                             blending
@@ -152,9 +151,9 @@ shared_ptr<Scene> prepareShaderSceneData(string fileName)
                         case PrimitiveType::ptCone: geometry->addEdit(primitives::Cone::createEdit(
                             operation,
                             transform,
-                            getFloat(editJson, "radiusTop",    0),
-                            getFloat(editJson, "radiusBottom", 1.5),
-                            getFloat(editJson, "height",       3.0),
+                            getFloat(editJson, "radiusTop",    0.25),
+                            getFloat(editJson, "radiusBottom", 0.5),
+                            getFloat(editJson, "height",       1.0),
                             getFloat(editJson, "rounding",     0.0),
                             rb::colors::white,
                             blending
@@ -164,7 +163,7 @@ shared_ptr<Scene> prepareShaderSceneData(string fileName)
                             transform,
                             getFloat(editJson, "radiusTop",    0.125),
                             getFloat(editJson, "radiusBottom", 0.25),
-                            getFloat(editJson, "height",       1),
+                            getFloat(editJson, "height",       1.0),
                             rb::colors::white,
                             blending
                         )); break;

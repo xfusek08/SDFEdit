@@ -17,11 +17,6 @@
 uniform vec3 cameraPosition;
 uniform mat4 viewProjection;
 
-uniform float a;
-uniform float b;
-uniform float c;
-uniform float d;
-
 // inputs
 smooth in vec3 fragPos;       // Fragment position in world space toward it will ray be casted from the camera
 in mat4 brickTransformMatrix; // Matrix transforming position of fragment from world space to local ray-marcher space
@@ -50,7 +45,6 @@ struct Ray {                  // the helper data structure to where store ray ma
 // Compute normal of the point it is computed within a
 // computation is done in ray-marching space
 vec3 getNormal(vec3 point, float currentDistance) {
-    point += vec3(a,b,c);
     vec2 e = vec2(NORMAL_OFFSET, 0);
     vec3 n = vec3(
         sampleVolume(point + e.xyy),

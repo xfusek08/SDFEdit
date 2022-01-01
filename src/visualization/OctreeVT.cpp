@@ -36,7 +36,7 @@ OctreeVT::OctreeVT() :
 {
 }
 
-void OctreeVT::prepare(const Scene& scene)
+void OctreeVT::prepare(Scene& scene)
 {
     if (!prepared) {
         prepared = true;
@@ -294,7 +294,7 @@ void OctreeVT::prepare(const Scene& scene)
     }
 }
 
-void OctreeVT::render(const Scene& scene)
+void OctreeVT::render(Scene& scene)
 {
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);

@@ -19,14 +19,4 @@ class Gui
         void init(std::shared_ptr<Scene> scene);
         void prepare(std::shared_ptr<Scene> scene);
         void render(const Scene& scene);
-    private:
-        float32 a = 0.0;
-        float32 b = 0.0;
-        float32 c = 0.0;
-        float32 d = 1.0;
-        
-        float32 blending = 0;
-        float32 rounding = 0;
-        
-        bool showBoxes = false;
 };

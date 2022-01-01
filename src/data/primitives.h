@@ -15,7 +15,7 @@ namespace primitives {
         inline GeometryEdit createEdit(
             glm::u8   operation = GeometryOperation::opAdd,
             Transform transform = {},
-            glm::f32  radius    = 1.0f,
+            glm::f32  radius    = 0.5f,
             glm::vec3 color     = rb::colors::white,
             glm::f32  blending  = 0.0f
         ) {
@@ -31,14 +31,15 @@ namespace primitives {
     };
     
     namespace Capsule {
-        inline glm::vec3 dimensions(const GeometryEdit& edit) { return glm::vec3( 2.0f * edit.primitiveData.x, edit.primitiveData.y + 2.0f * edit.primitiveData.x, 2.0f * edit.primitiveData.x) + (edit.blending * 0.5f); }
+        inline float32   width(const GeometryEdit& edit)      { return 2.0 * edit.primitiveData.x; }
+        inline float32   height(const GeometryEdit& edit)     { return edit.primitiveData.y; }
+        inline glm::vec3 dimensions(const GeometryEdit& edit) { return glm::vec3(width(edit), height(edit), width(edit)) + (edit.blending * 0.5f); }
         
         inline GeometryEdit createEdit(
             glm::u8   operation = GeometryOperation::opAdd,
             Transform transform = {},
             float32   width     = 0.5,
-            float32   height    = 0.5,
-            float32   radius    = 0.5,
+            float32   height    = 1.0,
             glm::vec3 color     = rb::colors::white,
             glm::f32  blending  = 0.0f
         ) {
@@ -48,7 +49,7 @@ namespace primitives {
             res.blending      = glm::clamp(blending, 0.0001f, 1.0f);
             res.color         = glm::vec4(color, 1);
             res.transform     = transform;
-            res.primitiveData = { width, height, radius, 0 };
+            res.primitiveData = { 0.5 * width, height, 0, 0 };
             return res;
         }
     };
@@ -79,12 +80,12 @@ namespace primitives {
         inline glm::vec3 dimensions(const GeometryEdit& edit) { return 2.0f * glm::vec3(edit.primitiveData) + (edit.blending * 0.5f); }
         
         inline GeometryEdit createEdit(
-            glm::u8   operation = GeometryOperation::opAdd,
-            Transform transform = {},
-            glm::vec3 dimension = glm::vec3(1.0f),
-            float32   rounding  = 0.0f,
-            glm::vec3 color     = rb::colors::white,
-            glm::f32  blending  = 0.0f
+            glm::u8   operation  = GeometryOperation::opAdd,
+            Transform transform  = {},
+            glm::vec3 dimensions = glm::vec3(1.0f),
+            float32   rounding   = 0.0f,
+            glm::vec3 color      = rb::colors::white,
+            glm::f32  blending   = 0.0f
         ) {
             GeometryEdit res;
             res.primitiveType = PrimitiveType::ptBox;
@@ -92,13 +93,19 @@ namespace primitives {
             res.blending      = glm::clamp(blending, 0.0001f, 1.0f);
             res.color         = glm::vec4(color, 1);
             res.transform     = transform;
-            res.primitiveData = glm::vec4(dimension, rounding);
+            res.primitiveData = glm::vec4(0.5f * dimensions, rounding);
             return res;
         }
     };
     
     namespace Cylinder {
-        inline glm::vec3 dimensions(const GeometryEdit& edit) { return glm::vec3(edit.primitiveData.x, edit.primitiveData.y, edit.primitiveData.x) * 2.0f + (edit.blending * 0.5f); }
+        inline glm::vec3 dimensions(const GeometryEdit& edit) {
+            return 2.0f * glm::vec3(
+                edit.primitiveData.x,
+                edit.primitiveData.y,
+                edit.primitiveData.x
+            ) + (edit.blending * 0.5f);
+        }
         
         inline GeometryEdit createEdit(
             glm::u8   operation = GeometryOperation::opAdd,
@@ -115,7 +122,7 @@ namespace primitives {
             res.blending      = glm::clamp(blending, 0.0001f, 1.0f);
             res.color         = glm::vec4(color, 1);
             res.transform     = transform;
-            res.primitiveData = { radius, height * 0.5, rounding, 0 };
+            res.primitiveData = { radius, 0.5 * height, rounding, 0 };
             return res;
         }
     };
@@ -123,17 +130,17 @@ namespace primitives {
     namespace Cone {
         inline glm::vec3 dimensions(const GeometryEdit& edit)
         {
-            return 2.0f * glm::vec3(
-                glm::max(edit.primitiveData.x, edit.primitiveData.y),
+            return glm::vec3(
+                2.0f * glm::max(edit.primitiveData.x, edit.primitiveData.y),
                 edit.primitiveData.z,
-                glm::max(edit.primitiveData.x, edit.primitiveData.y)
+                2.0f * glm::max(edit.primitiveData.x, edit.primitiveData.y)
             ) + (edit.blending * 0.5f);
         }
         
         inline GeometryEdit createEdit(
             glm::u8   operation    = GeometryOperation::opAdd,
             Transform transform    = {},
-            float32   radiusTop    = 0.125,
+            float32   radiusTop    = 0.25,
             float32   radiusBottom = 0.5,
             float32   height       = 1.0,
             float32   rounding     = 0.0,
@@ -146,7 +153,7 @@ namespace primitives {
             res.blending      = glm::clamp(blending, 0.0001f, 1.0f);
             res.color         = glm::vec4(color, 1);
             res.transform     = transform;
-            res.primitiveData = { radiusBottom, radiusTop, height * 0.5, rounding };
+            res.primitiveData = { radiusBottom, radiusTop, height, rounding };
             return res;
         }
     };
@@ -156,7 +163,7 @@ namespace primitives {
         {
             return glm::vec3(
                 2.0f * glm::max(edit.primitiveData.x, edit.primitiveData.y),
-                edit.primitiveData.z + edit.primitiveData.x + edit.primitiveData.y,
+                edit.primitiveData.z,
                 2.0f * glm::max(edit.primitiveData.x, edit.primitiveData.y)
             ) + (edit.blending * 0.5f);
         }
@@ -165,7 +172,7 @@ namespace primitives {
             glm::u8   operation    = GeometryOperation::opAdd,
             Transform transform    = {},
             float32   radiusTop    = 0.125,
-            float32   radiusBottom = 0.5,
+            float32   radiusBottom = 0.25,
             float32   height       = 1.0,
             glm::vec3 color        = rb::colors::white,
             glm::f32  blending     = 0.0f
@@ -176,7 +183,7 @@ namespace primitives {
             res.blending      = glm::clamp(blending, 0.0001f, 1.0f);
             res.color         = glm::vec4(color, 1);
             res.transform     = transform;
-            res.primitiveData = { radiusBottom, radiusTop, height * 0.5, 0 };
+            res.primitiveData = { radiusBottom, radiusTop, height, 0 };
             return res;
         }
     };

@@ -61,7 +61,7 @@ class ImguiLimits{
       auto it = limits.find(n);
       if(it == std::end(limits))
         return nullptr;
-      auto x = std::dynamic_pointer_cast<VarsLimits<T>>(it->second); 
+      auto x = std::dynamic_pointer_cast<VarsLimits<T>>(it->second);
       return x;
     }
     template<typename T>

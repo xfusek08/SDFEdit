@@ -5,11 +5,6 @@ layout (triangle_strip, max_vertices = 16) out;
 
 uniform vec3 cameraPosition;
 
-uniform float a;
-uniform float b;
-uniform float c;
-uniform float d;
-
 // data computed in vertex shader
 in mat4  transformMatrices[];
 in vec3  brickAtlasShifts[];

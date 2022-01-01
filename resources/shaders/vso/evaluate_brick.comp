@@ -15,18 +15,6 @@
 #ifndef BRICK_SIDE_LENGTH
     #define BRICK_SIDE_LENGTH 8  // lets have NxNxN bricks
 #endif
-#if BRICK_SIDE_LENGTH == 8
-    // Computation of 3D discrete location of brick in brick atlas texture:
-    //   return uvec3(
-    //       brickIndex % 8,
-    //       (brickIndex / 8) % 8,
-    //       brickIndex / (8 * 8)
-    //   );
-    #define BRICK_INDEX_TO_COORDS(brickIndex) \
-        uvec3((brickIndex & 7), ((brickIndex >> 3) & 7), (brickIndex >> 6))
-#else
-    #error BRICK_SIDE_LENGTH macro must have value 8 for now
-#endif
 
 #if BRANCHING_FACTOR == 2
     #define NODES_PER_TILE 8
@@ -82,7 +70,7 @@ uniform uint allowSubdivision;
 // brick pool
 layout(binding = 0, offset = 4) uniform atomic_uint brickCount;
 layout(r32f, binding = 1) writeonly restrict uniform image3D brickPoolTexture;
-uniform uint BricksInOneDimension;
+uniform uint bricksInOneDimension;
 
 // Primitive Cloud
 struct Edit {
@@ -98,16 +86,12 @@ layout(std430, binding = 4) buffer Input { Edit edits[]; };
 uniform uint editCount;
 uniform vec4 correctionVector;
 
-uniform float a;
-uniform float b;
-uniform float c;
-uniform float d;
-
 shared uint divide; // place in group-shared memory into which voting whenever node will be subdivided will take place.
 shared uint brickIndex;
 
 // SD Function of point to edit
 #define TRANSFORM_POS(edit, pos) (inverse(edit.transform) * vec4(pos + correctionVector.xyz, 1)).xyz;
+// TODO: precompute inverse
 
 float sdSphere(Edit edit, vec3 position) {
     vec3 p = TRANSFORM_POS(edit, position);
@@ -115,13 +99,17 @@ float sdSphere(Edit edit, vec3 position) {
 }
 
 float sdCapsule(Edit edit, vec3 position) {
-    vec3 p = TRANSFORM_POS(edit, position);
-    vec3 a = vec3(0,  0.5, 0) * edit.data.y;
-    vec3 b = vec3(0, -0.5, 0) * edit.data.y;
+    vec3  p = TRANSFORM_POS(edit, position);
+    float r = edit.data.x;
+    float h = max(0, edit.data.y - 2 * r);
+    
+    vec3 a = vec3(0,  0.5, 0) * h;
+    vec3 b = vec3(0, -0.5, 0) * h;
+    
     vec3 ab = b - a;
     vec3 ap = p - a;
     float t = clamp(dot(ab, ap) / dot(ab, ab), 0, 1);
-    return length(ap - ab * t) - edit.data.x;
+    return length(ap - ab * t) - r;
 }
 
 float sdTorus(Edit edit, vec3 position) {
@@ -149,7 +137,7 @@ float sdCylinder(Edit edit, vec3 position) {
 float sdCone(Edit edit, vec3 position) {
     float r1 = edit.data.x - edit.data.w;
     float r2 = edit.data.y - edit.data.w;
-    float h  = edit.data.z - edit.data.w;
+    float h  = edit.data.z * 0.5 - edit.data.w;
     vec3  p  = TRANSFORM_POS(edit, position);
 
     vec2  q  = vec2(length(p.xz), p.y);
@@ -164,19 +152,19 @@ float sdCone(Edit edit, vec3 position) {
 float sdRoundcone(Edit edit, vec3 position) {
     float r1 = edit.data.x;
     float r2 = edit.data.y;
-    float h  = edit.data.z;
+    float h  = edit.data.z - r1 - r2;
     vec3  p  = TRANSFORM_POS(edit, position);
-    p.y += h * 0.5;
-
-    vec2 q = vec2(length(p.xz), p.y);
-
+    p.y += 0.5 * (h - (r1 - r2));
+    
     float b = (r1 - r2) / h;
+    vec2 q = vec2(length(p.xz), p.y);
+    
     float a = sqrt(1.0 - b * b);
     float k = dot(q, vec2(-b, a));
-
-    if(k < 0.0)   return length(q) - r1;
-    if(k > a * h) return length(q - vec2(0.0, h)) - r2;
-
+    
+    if (k < 0.0) return length(q) - r1;
+    if (k > a * h) return length(q - vec2(0.0, h)) - r2;
+            
     return dot(q, vec2(a, b)) - r1;
 }
 
@@ -271,8 +259,10 @@ void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue, vec3 voxelCente
         STORE_VALUE_WITH_SIFT(ivec3(cornerShift.x, 0, cornerShift.z));
         STORE_VALUE_WITH_SIFT(ivec3(cornerShift.x, cornerShift.y, 0));
     }
+}
 
-    // memoryBarrierImage(); // this will probably wont be needed, memory is not read in this shader
+uint encodeBrickCoords(uvec3 coords) {
+    return ((coords.x & 0x3FF) << 20) | ((coords.y & 0x3FF) << 10) | (coords.z & 0x3FF);
 }
 
 void main() {
@@ -309,9 +299,12 @@ void main() {
         barrier();
         
         // all threads will find voxel coordinate in brick pool based on the brick index
-        uvec3 brickCoords = BRICK_INDEX_TO_COORDS(brickIndex);
-        uvec3 voxelCoord  = 10 * brickCoords + uvec3(1, 1, 1) + gl_LocalInvocationID;
-        // uvec3 voxelCoord  = 8 * brickCoords + gl_LocalInvocationID;
+        uvec3 brickCoords = uvec3(
+            brickIndex % bricksInOneDimension,
+            (brickIndex / bricksInOneDimension) % bricksInOneDimension,
+            brickIndex / (bricksInOneDimension * bricksInOneDimension)
+        );
+        uvec3 voxelCoord = 10 * brickCoords + gl_LocalInvocationID + uvec3(1, 1, 1);
         
         writeToVolumeTexture(ivec3(voxelCoord), sdfValue, voxelCenter, fullStep, 1.0 / nodeVertex.w);
         
@@ -319,7 +312,7 @@ void main() {
         if (gl_LocalInvocationIndex == 0 ) {
             uint flags = HAS_BRICK_BIT;
             uint newTileFirstNodeIndex = 0;
-            nodeData[nodeIndex] = brickIndex; // TODO: store 3d coordinates in 10b each ?
+            nodeData[nodeIndex] = encodeBrickCoords(brickCoords);
             
             if (allowSubdivision != 0) {
                 flags |= SUBDIVIDE_THIS_BIT;

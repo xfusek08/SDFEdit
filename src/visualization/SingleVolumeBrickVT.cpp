@@ -21,7 +21,7 @@ SingleVolumeBrickVT::SingleVolumeBrickVT() :
     glCreateVertexArrays(1, &vao);
 }
 
-void SingleVolumeBrickVT::prepare(const Scene& scene)
+void SingleVolumeBrickVT::prepare(Scene& scene)
 {
     // Choose geometry to evaluate onto GPU
     // ------------------------------------
@@ -167,7 +167,7 @@ void SingleVolumeBrickVT::prepare(const Scene& scene)
     }
 }
 
-void SingleVolumeBrickVT::render(const Scene& scene)
+void SingleVolumeBrickVT::render(Scene& scene)
 {
     renderProgram.use();
     

@@ -38,23 +38,6 @@ Gui::~Gui()
 
 void Gui::init(shared_ptr<Scene> scene)
 {
-    #define defvar(ident) \
-        scene->vars.addFloat(#ident, ident); \
-        addVarsLimitsF(scene->vars, #ident, -15.0, 15.0, 0.001)
-        
-    defvar(a);
-    defvar(b);
-    defvar(c);
-    defvar(d);
-    
-    scene->vars.addFloat("blending", blending);
-    addVarsLimitsF(scene->vars, "blending", 0.01, 2.0, 0.01);
-
-    scene->vars.addFloat("rounding", rounding);
-    addVarsLimitsF(scene->vars, "rounding", 0.01, 1.0, 0.01);
-    
-    
-    scene->vars.addBool("showBoxes", showBoxes);
 }
 
 void Gui::prepare(shared_ptr<Scene> scene)
@@ -65,7 +48,7 @@ void Gui::prepare(shared_ptr<Scene> scene)
 
     // bool showDemo = true;
     // ImGui::ShowDemoWindow(&showDemo);
-    drawImguiVars(scene->vars);
+    drawImguiVars(*scene->vars);
     
     ImGui::Render();
 }

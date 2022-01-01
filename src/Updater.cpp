@@ -30,10 +30,6 @@ void Updater::onInputChange(shared_ptr<Scene> scene, const input::InputState& in
     for (auto& system : systems) {
         system->onInputChange(scene, input, tick);
     }
-    
-    if (input.isKeyPressed(GLFW_KEY_L)) {
-        scene->division++;
-    }
 }
 
 glm::vec3 dir = glm::vec3(0, 0.1, 0);

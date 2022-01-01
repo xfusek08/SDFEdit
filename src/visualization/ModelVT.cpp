@@ -55,7 +55,7 @@ void ModelVT::init(shared_ptr<Scene> scene)
     geometryBatches.clear();
 }
 
-void ModelVT::prepare(const Scene& scene)
+void ModelVT::prepare(Scene& scene)
 {
     auto cam = scene.cameraController->getCamera();
     if (cam.dirtyFlag) {
@@ -87,7 +87,8 @@ void ModelVT::prepare(const Scene& scene)
         materials.push_back(model.material);
         
         // calculate indices of nodes which will be rendered
-        auto toRenderIndices = generateToRenderIndices(model, scene.division);
+        auto toRenderIndices = generateToRenderIndices(model, *scene.vars->addOrGet<uint32>("division", 0));
+        
         for (auto nodeIndex : toRenderIndices) {
             currentBatch.toRenderNodes.push_back({nodeIndex, i});
         }
@@ -102,7 +103,6 @@ void ModelVT::prepare(const Scene& scene)
     }
     
     for (auto& [geometryPrt, batch] : geometryBatches) {
-        // add nodes to be rendered ino
         if (batch.vao == nullptr) {
             batch.vao = make_unique<gl::VertexArray>();
             batch.toRenderNodesBuffer = make_unique<gl::Buffer>(batch.toRenderNodes, GL_DYNAMIC_DRAW);
@@ -114,15 +114,22 @@ void ModelVT::prepare(const Scene& scene)
     }
 }
 
-void ModelVT::render(const Scene& scene)
+void ModelVT::render(Scene& scene)
 {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    
     auto& prg =renderProgram;
+    
+    uint32* boxesRendered  = scene.vars->addOrGet<uint32>("boxesRendered", 0);
+    uint32* modelsRendered = scene.vars->addOrGet<uint32>("modelsRendered", 0);
+    uint32* geometriesRendered = scene.vars->addOrGet<uint32>("geometriesRendered", 0);
+    
+    *boxesRendered = 0;
+    *modelsRendered = transforms.size();
+    *geometriesRendered = geometryBatches.size();
     
     auto render = [&](gl::Program& prg, uint cnt = 0) {
         prg.use();
@@ -138,15 +145,15 @@ void ModelVT::render(const Scene& scene)
             
             glBindTexture(GL_TEXTURE_3D, geometryPrt->octree->brickPool->brickAtlas->getGlID());
             
-            glBindImageTexture(
-                1,                        // Texture unit
-                geometryPrt->octree->brickPool->brickAtlas->getGlID(), // Texture name
-                0,                        // Level of Mip Map
-                GL_FALSE,                 // Layered (false)
-                0,                        // Specify layer if Layered is GL_FALSE
-                GL_READ_ONLY,             // access
-                GL_R32F                   // format
-            );
+            // glBindImageTexture(
+            //     1,                        // Texture unit
+            //     geometryPrt->octree->brickPool->brickAtlas->getGlID(), // Texture name
+            //     0,                        // Level of Mip Map
+            //     GL_FALSE,                 // Layered (false)
+            //     0,                        // Specify layer if Layered is GL_FALSE
+            //     GL_READ_ONLY,             // access
+            //     GL_R32F                   // format
+            // );
             
             prg.uniform("brickAtlas", uint32(1));
             prg.uniform("TranslationsBlock", *transformBuffer, 4);
@@ -156,21 +163,13 @@ void ModelVT::render(const Scene& scene)
             prg.uniform("brickAtlasVoxelSize", geometryPrt->octree->brickPool->getAtlasVoxelSize());
             prg.uniform("brickAtlasStride",    geometryPrt->octree->brickPool->getAtlasStride());
             
-            // debug wars
-            auto setVar = [&] (string ident) {
-                float val =scene.vars.getFloat(ident);
-                prg.uniform(ident.c_str(), val);
-            };
-            setVar("a");
-            setVar("b");
-            setVar("c");
-            setVar("d");
-            
-            glDrawArrays(GL_POINTS, 0, cnt > 0 ? cnt : batch.toRenderNodes.size());
+            uint32 toRenderCount = cnt > 0 ? cnt : batch.toRenderNodes.size();
+            *boxesRendered += toRenderCount;
+            glDrawArrays(GL_POINTS, 0, toRenderCount);
         }
     };
     
-    if (scene.vars.getBool("showBoxes")) {
+    if (*scene.vars->addOrGet<bool>("showBoxes", false)) {
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         render(brickShellProgram);
         // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);

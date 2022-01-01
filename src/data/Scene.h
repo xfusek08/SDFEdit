@@ -1,4 +1,4 @@
- #pragma once
+#pragma once
 
 #include <data/Model.h>
 #include <data/geometry.h>
@@ -13,13 +13,11 @@
 
 struct Scene
 {
+    Scene() : vars(std::make_unique<vars::Vars>()) {}
+    
     std::unique_ptr<rb::CameraController> cameraController;
     std::vector<Model> models;
-    bool dirty;
     
     // debugging data
-    uint32 division = 0;
-    bool shouldReload = false;
-    
-    vars::Vars vars; // NOTE temporary for debugging purposes until custom gui with ECS is implementred
+    std::unique_ptr<vars::Vars> vars; // NOTE temporary for debugging purposes until custom gui with ECS is implementred
 };
