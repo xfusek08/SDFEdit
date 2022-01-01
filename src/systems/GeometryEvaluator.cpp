@@ -1,4 +1,6 @@
 
+#define NO_LOG
+
 #include <systems/GeometryEvaluator.h>
 
 #include <unordered_set>
@@ -6,6 +8,7 @@
 #include <RenderBase/asserts.h>
 
 #include <imguiVars/addVarsLimits.h>
+
 
 using namespace std;
 using namespace rb;
@@ -40,7 +43,7 @@ GeometryEvaluator::GeometryEvaluator() :
 void GeometryEvaluator::init(std::shared_ptr<Scene> scene)
 {
     for (const auto& model : scene->models) {
-        AddToEvaluation(model.geometry);
+        addToEvaluation(model.geometry);
     }
 }
 
@@ -53,6 +56,7 @@ void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::
 
 void GeometryEvaluator::onTick(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)
 {
+    maxSubdivisions = *scene->vars->addOrGet<uint32>("maxDivisions", 3);
     evaluateQueue();
 }
 
@@ -71,7 +75,7 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     // -------------------------------------
     
     // init octree data structure which will be filled by following algorithm
-    auto octree = make_shared<SVOctree>(BRANCHING_FACTOR, 10000);
+    auto octree = geometry.octree != nullptr ? geometry.octree : make_shared<SVOctree>(BRANCHING_FACTOR, 10000);
     
     // init first level for algorithm runtime
     SVOctree::Level* currentLevel = octree->initFirstLevel();

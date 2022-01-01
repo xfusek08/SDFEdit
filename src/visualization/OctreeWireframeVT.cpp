@@ -16,8 +16,6 @@ OctreeWireframeVT::OctreeWireframeVT() :
 
 void OctreeWireframeVT::prepare(Scene& scene)
 {
-    RETURN_ON_VARS_SWITCH("showOctree");
-    
     // camera update
     auto cam = scene.cameraController->getCamera();
     if (cam.dirtyFlag) {
@@ -27,7 +25,7 @@ void OctreeWireframeVT::prepare(Scene& scene)
 
 void OctreeWireframeVT::render(Scene& scene)
 {
-    RETURN_ON_VARS_SWITCH("showOctree");
+    if (!scene.hasActiveFlag("showOctree")) return;
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -39,6 +37,7 @@ void OctreeWireframeVT::render(Scene& scene)
     // NOTE: renders first geometry
     
     const auto geometry = scene.models[0].geometry;
+    octreeWireFrameProgram.uniform("offset", scene.models[0].transform.position);
     if (geometry->octree != nullptr) {
         vertexArray->bind();
         vertexArray->addAttrib(*(geometry->octree->vertexBuffer), 0, 4, GL_FLOAT);

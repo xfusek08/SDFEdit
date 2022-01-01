@@ -32,7 +32,6 @@ void Updater::onInputChange(shared_ptr<Scene> scene, const input::InputState& in
     }
 }
 
-glm::vec3 dir = glm::vec3(0, 0.1, 0);
 void Updater::onTick(shared_ptr<Scene> scene, const input::InputState& input, const timing::TimeStep& tick)
 {
     // TODO: for each updatable item ins scene:

@@ -12,7 +12,7 @@ using namespace rb;
 inline const vector<uint32> generateToRenderIndices(const Model& model, Scene& scene)
 {
     auto extractLevelNodesIndex = [&model](uint32 levelIndex) {
-        const auto& level = model.geometry->octree->levels[levelIndex];
+        const auto& level = model.geometry->octree->levels[glm::min(uint32(model.geometry->octree->levels.size() - 1), levelIndex)];
         const auto& nodes = model.geometry->octree->getNodes();
         vector<uint32> res;
         res.reserve(level.bricksInLevel);
@@ -24,24 +24,16 @@ inline const vector<uint32> generateToRenderIndices(const Model& model, Scene& s
         return move(res);
     };
     
-    uint32 level = 0;
     const auto& camera = scene.cameraController->getCamera();
     auto distance = glm::distance(model.transform.position, camera.getPosition());
     if (distance > camera.getFarPlaneDistance()) {
         return {};
     }
     
-    if (distance < camera.getFarPlaneDistance() * 0.2) {
-        level = 1;
-    }
-    if (distance < camera.getFarPlaneDistance() * 0.10) {
-        level = 2;
-    }
-    if (distance < camera.getFarPlaneDistance() * 0.03) {
-        level = 3;
-    }
-    
-    return move(extractLevelNodesIndex(glm::min(level, *scene.vars->addOrGet<uint32>("maxDivisions", 3))));
+    auto division = *scene.vars->addOrGet<uint32>("maxDivisions", 3);
+    auto step = (camera.getFarPlaneDistance() * 0.1) / float32(division);
+    uint32 level = division - glm::min(division, uint32(glm::floor(distance / step)));
+    return move(extractLevelNodesIndex(level));
 }
 
 ModelVT::ModelVT()

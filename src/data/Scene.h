@@ -20,4 +20,5 @@ struct Scene
     
     // debugging data
     std::unique_ptr<vars::Vars> vars; // NOTE temporary for debugging purposes until custom gui with ECS is implementred
+    inline bool hasActiveFlag(std::string flagName) { return *vars->addOrGet<bool>(flagName, false); }
 };

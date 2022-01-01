@@ -16,8 +16,9 @@ struct Model {
     Transform transform = {};
     Material material = {};
     
-    Model(std::shared_ptr<Geometry> geometry, Transform transform = Transform()) :
+    Model(std::shared_ptr<Geometry> geometry, Transform transform = Transform(), Material material = { {0.78, 0.27, 0.23}, 0.5 }) :
         geometry(geometry),
-        transform(transform)
+        transform(transform),
+        material(material)
     {}
 };

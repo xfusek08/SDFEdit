@@ -1,0 +1,23 @@
+{
+    "materials": {
+        "red": {
+            "color": [ 0.78, 0.27, 0.23 ],
+            "shininess": 0.5
+        }
+    },
+    "geometries": {
+        "Mushed": [
+            { "type": "Sphere",    "position": [ 0.2, 0, 0 ], "blending": 0.5},
+            { "type": "Capsule",   "position": [ 0.8, 0, 0 ], "blending": 0.5},
+            { "type": "Torus",     "position": [ 1.6, 0, 0 ], "blending": 0.5},
+            { "type": "Box",       "position": [ 2.4, 0, 0 ], "rounding": 0.05, "rotation": [45, 45, 45], "blending": 0.5},
+            { "type": "Cylinder",  "position": [ 3.2, 0, 0 ], "rounding": 0.1, "rotation": [90, 30, 30], "blending": 0.5},
+            { "type": "Cone",      "position": [   4, 0, 0 ], "rounding": 0.1, "rotation": [30, 0, 30], "blending": 0.5},
+            { "type": "RoundCone", "position": [   4.6, 0, 0 ], "blending": 0.5}
+        ]
+    },
+    
+    "models": [
+        { "geometry": "Mushed",     "position": [  0, 0, 0 ], "material": "red" }
+    ]
+}

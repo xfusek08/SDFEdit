@@ -62,6 +62,7 @@ struct Geometry {
     void addEdit(GeometryEdit edit);
     void addEdits(const std::vector<GeometryEdit>& edits);
     void clearEdits();
+    void updateAABB();
     
     inline const std::vector<GeometryEdit>& readEdits() const { return edits; }
     inline std::vector<GeometryEdit>& getEdits() { return edits; }

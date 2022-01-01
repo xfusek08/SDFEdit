@@ -16,6 +16,7 @@
 #include <visualization/ModelVT.h>
 
 #include <systems/GeometryEvaluator.h>
+#include <systems/RandomMovementTestBench.h>
 
 #include <Updater.h>
 #include <Renderer.h>
@@ -37,14 +38,18 @@ class Application : public app::BasicOpenGLApplication
     unique_ptr<Renderer> renderer;
     unique_ptr<Gui>      gui;
     
+    shared_ptr<RandomMovementTestBench> testBench;
+    
     vector<const char*> sceneNames = {
         RESOURCE_SCENES_BASIC_SCENE_JSON,
         RESOURCE_SCENES_CHESS_BOARD_JSON,
-        RESOURCE_SCENES_KNIGHT_TEST_JSON
+        RESOURCE_SCENES_KNIGHT_TEST_JSON,
+        RESOURCE_SCENES_MUSHED_JSON,
+        "stress"
     };
     
     enum Scenes {
-        a,b, c
+        a,b,c,d,stress
     };
 
     bool init() override
@@ -52,18 +57,21 @@ class Application : public app::BasicOpenGLApplication
         // App general settings
         // --------------------
         
-        scene = prepareShaderSceneData(sceneNames[0]);
+        scene = prepareShaderSceneData(sceneNames[d]);
         // scene = make_shared<Scene>();
         
         // scene switching
-        scene->vars->addEnum<Scenes>("scene", a);
+        scene->vars->addEnum<Scenes>("scene", d);
         addEnumValues<Scenes>(*scene->vars, rb::utils::genRange<int32_t>(0, sceneNames.size(), 1), sceneNames);
         scene->vars->setChangeCallback("scene", [&]() {
             *scene->vars->addOrGet<const char*>("reloadTo", nullptr) = sceneNames[*scene->vars->get<Scenes>("scene")];
         });
         
+        auto evaluator = make_shared<GeometryEvaluator>();
+        testBench = make_shared<RandomMovementTestBench>(AABB({-1,-1,-1}, {1,1,1}), evaluator);
         updater = make_unique<Updater>(SystemArray{
-            make_shared<GeometryEvaluator>(),
+            testBench,
+            evaluator,
         });
         
         renderer = make_unique<Renderer>(VTArray{
@@ -160,7 +168,8 @@ class Application : public app::BasicOpenGLApplication
     {
         auto reloadTo = scene->vars->addOrGet<const char*>("reloadTo", nullptr);
         if (*reloadTo != nullptr) {
-            auto newScene = prepareShaderSceneData(*reloadTo);
+            testBench->boundarries = AABB(glm::vec3(-1), glm::vec3(1));
+            auto newScene = scene->vars->getEnum<Scenes>("scene") == stress ? loadStressScene() : prepareShaderSceneData(*reloadTo);
             newScene->cameraController = move(scene->cameraController);
             newScene->vars = move(scene->vars);
             scene = newScene;
@@ -181,6 +190,25 @@ class Application : public app::BasicOpenGLApplication
         renderer->render(*scene);
         gui->render(*scene);
         scene->cameraController->getCamera().dirtyFlag = false;
+    }
+    
+    shared_ptr<Scene> loadStressScene()
+    {
+        auto newScene = make_shared<Scene>();
+        auto geometry = make_shared<Geometry>();
+        
+        for (int x = 0; x < 6; ++x) {
+            for (int y = 0; y < 6; ++y) {
+                for (int z = 0; z < 6; ++z) {
+                    // geometry->addEdit(primitives::Cone::createEdit(GeometryOperation::opAdd, Transform({x - 3, y - 3, z - 3})));
+                    geometry->addEdit(primitives::Sphere::createEdit(GeometryOperation::opAdd, Transform({x - 3, y - 3, z - 3})));
+                }
+            }
+        }
+        
+        newScene->models.push_back(Model(geometry));
+        testBench->boundarries = AABB(glm::vec3(-3), glm::vec3(3));
+        return newScene;
     }
 };
 

@@ -38,6 +38,8 @@ Gui::~Gui()
 
 void Gui::init(shared_ptr<Scene> scene)
 {
+    scene->vars->addOrGet<uint32>("maxDivisions", 3);
+    addVarsLimitsU(*scene->vars, "maxDivisions", 0, 5, 1);
 }
 
 void Gui::prepare(shared_ptr<Scene> scene)

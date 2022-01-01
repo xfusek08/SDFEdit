@@ -5,8 +5,7 @@
 void Geometry::addEdit(GeometryEdit edit)
 {
     edits.push_back(edit);
-    auto toadd =  primitives::computeAABB(edit);
-    aabb = AABB::add(aabb, toadd);
+    aabb = AABB::add(aabb, primitives::computeAABB(edit));
 }
 
 void Geometry::addEdits(const std::vector<GeometryEdit>& edits)
@@ -19,4 +18,12 @@ void Geometry::addEdits(const std::vector<GeometryEdit>& edits)
 void Geometry::clearEdits()
 {
     edits.clear();
+}
+
+void Geometry::updateAABB()
+{
+    aabb = {};
+    for (auto edit : edits) {
+        aabb = AABB::add(aabb, primitives::computeAABB(edit));
+    }
 }

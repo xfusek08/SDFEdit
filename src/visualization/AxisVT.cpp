@@ -46,8 +46,6 @@ AxisVT::AxisVT() :
 
 void AxisVT::prepare(Scene& scene)
 {
-    RETURN_ON_VARS_SWITCH("showAxis");
-    
     // camera update
     auto cam = scene.cameraController->getCamera();
     if (cam.dirtyFlag) {
@@ -57,7 +55,7 @@ void AxisVT::prepare(Scene& scene)
 
 void AxisVT::render(Scene& scene)
 {
-    RETURN_ON_VARS_SWITCH("showAxis");
+    if (!scene.hasActiveFlag("renderAxis")) return;
     
     glEnable(GL_DEPTH_TEST);
     
