@@ -11,8 +11,6 @@
 
 #include <glm/gtx/string_cast.hpp>
 
-#include <visualization/SingleVolumeBrickVT.h>
-#include <visualization/OctreeVT.h>
 #include <visualization/AxisVT.h>
 #include <visualization/OctreeWireframeVT.h>
 #include <visualization/ModelVT.h>

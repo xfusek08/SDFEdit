@@ -42,8 +42,6 @@ void GeometryEvaluator::init(std::shared_ptr<Scene> scene)
     for (const auto& model : scene->models) {
         AddToEvaluation(model.geometry);
     }
-    scene->vars->addOrGet<uint32>("division", 0);
-    addVarsLimitsU(*scene->vars, "division", 0, maxSubdivisions, 1);
 }
 
 void GeometryEvaluator::onInputChange(shared_ptr<Scene> scene, const rb::input::InputState& input, const rb::timing::TimeStep& tick)

@@ -9,32 +9,39 @@
 using namespace std;
 using namespace rb;
 
-inline const vector<uint32> generateToRenderIndices(const Model& model, uint32 division)
+inline const vector<uint32> generateToRenderIndices(const Model& model, Scene& scene)
 {
-    
-    // TODO: run algorithm where we trace rays on gpu from camera to scene and count hitted bricks for the model
-    // NOTE: for now just copy indices of particular level
-    auto levelIndex = division % model.geometry->octree->levels.size();
-    
-    const auto& level = model.geometry->octree->levels[levelIndex];
-    
-    vector<uint32> res;
-    res.reserve(level.bricksInLevel);
-    
-    auto nodes = model.geometry->octree->getNodes();
-    uint32 cnt = 0;
-    for (int i = level.startNode; i < level.startNode + level.nodeCount; ++i) {
-        if (nodes[i].hasBrick()) {
-            res.push_back(i);
-            cnt++;
+    auto extractLevelNodesIndex = [&model](uint32 levelIndex) {
+        const auto& level = model.geometry->octree->levels[levelIndex];
+        const auto& nodes = model.geometry->octree->getNodes();
+        vector<uint32> res;
+        res.reserve(level.bricksInLevel);
+        for (int i = level.startNode; i < level.startNode + level.nodeCount; ++i) {
+            if (nodes[i].hasBrick()) {
+                res.push_back(i);
+            }
         }
-        // if (cnt == 1) {
-        //     break;
-        // }
+        return move(res);
+    };
+    
+    uint32 level = 0;
+    const auto& camera = scene.cameraController->getCamera();
+    auto distance = glm::distance(model.transform.position, camera.getPosition());
+    if (distance > camera.getFarPlaneDistance()) {
+        return {};
     }
     
-    // RB_DEBUG("Printing " << res.size() << " at level " << levelIndex);
-    return move(res);
+    if (distance < camera.getFarPlaneDistance() * 0.2) {
+        level = 1;
+    }
+    if (distance < camera.getFarPlaneDistance() * 0.10) {
+        level = 2;
+    }
+    if (distance < camera.getFarPlaneDistance() * 0.03) {
+        level = 3;
+    }
+    
+    return move(extractLevelNodesIndex(glm::min(level, *scene.vars->addOrGet<uint32>("maxDivisions", 3))));
 }
 
 ModelVT::ModelVT()
@@ -87,7 +94,7 @@ void ModelVT::prepare(Scene& scene)
         materials.push_back(model.material);
         
         // calculate indices of nodes which will be rendered
-        auto toRenderIndices = generateToRenderIndices(model, *scene.vars->addOrGet<uint32>("division", 0));
+        auto toRenderIndices = generateToRenderIndices(model, scene);
         
         for (auto nodeIndex : toRenderIndices) {
             currentBatch.toRenderNodes.push_back({nodeIndex, i});

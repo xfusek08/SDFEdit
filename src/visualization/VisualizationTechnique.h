@@ -12,3 +12,6 @@ class VisualizationTechnique
 };
 
 using VTArray = std::vector<std::shared_ptr<VisualizationTechnique>>;
+
+// NOTE: Temporary solution
+#define RETURN_ON_VARS_SWITCH(name) if (!(*scene.vars->addOrGet<bool>(name, false))) return

@@ -16,6 +16,8 @@ OctreeWireframeVT::OctreeWireframeVT() :
 
 void OctreeWireframeVT::prepare(Scene& scene)
 {
+    RETURN_ON_VARS_SWITCH("showOctree");
+    
     // camera update
     auto cam = scene.cameraController->getCamera();
     if (cam.dirtyFlag) {
@@ -25,6 +27,8 @@ void OctreeWireframeVT::prepare(Scene& scene)
 
 void OctreeWireframeVT::render(Scene& scene)
 {
+    RETURN_ON_VARS_SWITCH("showOctree");
+    
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
