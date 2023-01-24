@@ -35,16 +35,7 @@ target_include_directories(${PROJECT_NAME}
 include(vendor/RenderBase/cmakeUtils/LoadResourceFiles.cmake)
 load_resource_definitions(resources RESOURCES_DEBUG_DEFINITIONS RESOURCES_RELEASE_DEFINITIONS)
 
-message("${RESOURCES_DEBUG_DEFINITIONS}")
-message("${RESOURCES_RELEASE_DEFINITIONS}")
-
 target_compile_definitions(${PROJECT_NAME} PUBLIC
-    $<$<CONFIG:DEBUG>:
-        "DEBUG"
-        ${RESOURCES_DEBUG_DEFINITIONS}
-    >
-    $<$<CONFIG:RELEASE>:
-        "RELEASE" "NO_ASSERT" "NO_LOGS"
-        ${RESOURCES_RELEASE_DEFINITIONS}
-    >
+    $<$<CONFIG:Debug>:DEBUG ${RESOURCES_DEBUG_DEFINITIONS}>
+    $<$<CONFIG:Release>:NDEBUG RELEASE NO_ASSERT NO_LOGS ${RESOURCES_RELEASE_DEFINITIONS}>
 )
