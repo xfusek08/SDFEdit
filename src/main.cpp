@@ -57,11 +57,11 @@ class Application : public app::BasicOpenGLApplication
         // App general settings
         // --------------------
         
-        scene = prepareShaderSceneData(sceneNames[d]);
+        scene = prepareShaderSceneData(sceneNames[a]);
         // scene = make_shared<Scene>();
         
         // scene switching
-        scene->vars->addEnum<Scenes>("scene", d);
+        scene->vars->addEnum<Scenes>("scene", a);
         addEnumValues<Scenes>(*scene->vars, rb::utils::genRange<int32_t>(0, sceneNames.size(), 1), sceneNames);
         scene->vars->setChangeCallback("scene", [&]() {
             *scene->vars->addOrGet<const char*>("reloadTo", nullptr) = sceneNames[*scene->vars->get<Scenes>("scene")];

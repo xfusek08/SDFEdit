@@ -11,7 +11,7 @@
 //        - brick has to be in octree space and then is shifted so its minimal corner is at the origin
 
 #define MAX_STEPS     50   // After N steps will marching algorithm ended event if marcher did not stepped out of the bricks volume
-#define NORMAL_OFFSET 0.05 // Normal difference distance to properly sample brick volume - optimized for 8x8x8 brick (without border)
+#define NORMAL_OFFSET 0.06 // Normal difference distance to properly sample brick volume - optimized for 8x8x8 brick (without border)
 #define HIT_DISTANCE  0.01 // Distance from surface considered as hit.
 
 uniform vec3 cameraPosition;
@@ -58,24 +58,24 @@ vec3 toLocal(vec3 pos) {
     return (brickTransformMatrix * vec4(pos, 1)).xyz;
 }
 
-// Computing basic phong lighting
+// Computing basic Phong lighting
 vec4 getHitColor(vec3 pos, vec3 normal) {
-    vec3 lightPos = toLocal(vec3(100, 100, 100));
-    vec3 lightColor = vec3(1, 1, 1);
-    vec3 ambient = vec3(1, 1, 1) * 0.25;
-    vec3 objectColor = color;
+    vec3  lightPos         = toLocal(vec3(100, 100, 100));
+    vec3  lightColor       = vec3(1, 1, 1);
+    vec3  ambient          = vec3(1, 1, 1) * 0.25;
+    vec3  objectColor      = color;
     float specularStrength = shininess;
     
     // diffuse
-    vec3 lightDir = normalize(lightPos);
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor;
+    vec3  lightDir = normalize(lightPos);
+    float diff     = max(dot(normal, lightDir), 0.0);
+    vec3  diffuse  = diff * lightColor;
     
     // specular
-    vec3 viewDir = normalize(toLocal(cameraPosition) - pos);
-    vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    vec3 specular = specularStrength * spec * lightColor;
+    vec3  viewDir    = normalize(toLocal(cameraPosition) - pos);
+    vec3  reflectDir = reflect(-lightDir, normal);
+    float spec       = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+    vec3  specular   = specularStrength * spec * lightColor;
     
     vec3 result = (ambient + diffuse + specular) * objectColor;
     return vec4(result, 1.0);
@@ -121,6 +121,7 @@ void main() {
         if (distToVolume <= HIT_DISTANCE) {
             fColor = getHitColor(actPosition, getNormal(actPosition, distToVolume));
             
+            // Depth buffer value correction
             // see: https://stackoverflow.com/questions/53650693/opengl-impostor-sphere-problem-when-calculating-the-depth-value
             vec4 c = viewProjection * inverse(brickTransformMatrix) * vec4(actPosition, 1);
             float ndcDepth = c.z / c.w;

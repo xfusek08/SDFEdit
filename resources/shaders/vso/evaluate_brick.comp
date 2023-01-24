@@ -222,13 +222,22 @@ void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue, vec3 voxelCente
     
     // handle the border region
     ivec3 cornerShift   = ivec3(0, 0, 0);
-    uint  corderCounter = 0;
+    uint  cornerCounter = 0;
     
-    #define STORE_VALUE_WITH_SIFT(shift) imageStore(brickPoolTexture, brickVoxelCoord + shift, vec4(scale * getSDFValue(fullStep * (1.0 / scale) * vec3(shift) + voxelCenter), 0, 0, 0))
-    #define PROCESS_EDGE(sx, sy, sz) \
+    #define STORE_VALUE_WITH_SIFT(shift)                \
+        imageStore(                                     \
+            brickPoolTexture,                           \
+            brickVoxelCoord + shift,                    \
+            vec4(scale                                  \
+                * getSDFValue(fullStep * (1.0 / scale)  \
+                * vec3(shift) + voxelCenter),           \
+                0, 0, 0                                 \
+            )                                           \
+        )
+    #define PROCESS_EDGE(sx, sy, sz)              \
         STORE_VALUE_WITH_SIFT(ivec3(sx, sy, sz)); \
-        cornerShift += ivec3(sx, sy, sz); \
-        corderCounter++
+        cornerShift += ivec3(sx, sy, sz);         \
+        cornerCounter++
     
     // this branching probably can be speeded up by some clever register array and one or two branches
     
@@ -250,11 +259,11 @@ void writeToVolumeTexture(ivec3 brickVoxelCoord, float sdfValue, vec3 voxelCente
         PROCESS_EDGE(0, 0, 1);
     }
     
-    if (corderCounter >= 2) {
+    if (cornerCounter >= 2) {
         STORE_VALUE_WITH_SIFT(cornerShift);
     }
     
-    if (corderCounter == 3) {
+    if (cornerCounter == 3) {
         STORE_VALUE_WITH_SIFT(ivec3(0, cornerShift.y, cornerShift.z));
         STORE_VALUE_WITH_SIFT(ivec3(cornerShift.x, 0, cornerShift.z));
         STORE_VALUE_WITH_SIFT(ivec3(cornerShift.x, cornerShift.y, 0));
@@ -271,8 +280,8 @@ void main() {
     }
     barrier();
     
-    uint nodeIndex = levelBeginIndex + gl_WorkGroupID.x;
-    vec4 nodeVertex  = nodeVertices[nodeIndex];
+    uint nodeIndex  = levelBeginIndex + gl_WorkGroupID.x;
+    vec4 nodeVertex = nodeVertices[nodeIndex];
    
     ivec3 branchCoefficients = ivec3(gl_LocalInvocationID) - (BRICK_SIDE_LENGTH / 2);
     float fullStep           = 1.0 / (float(BRICK_SIDE_LENGTH)); // hopefully the only FP division and possibly optimize into multiplication by 0.5, 0.25 etc.

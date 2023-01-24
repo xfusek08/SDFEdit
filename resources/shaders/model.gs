@@ -11,7 +11,7 @@ in vec3  brickAtlasShifts[];
 in vec3  colors[];
 in float shininesses[];
 
-// various pre computed values needed by fragment shader - brick marcher
+// various pre computed values common to all fragments for brick marching
 smooth out vec3 fragPos;
 flat out mat4   brickTransformMatrix;
 flat out vec3   brickCameraPosition;
@@ -19,6 +19,7 @@ flat out vec3   brickAtlasShift;
 flat out vec3   color;
 flat out float  shininess;
 
+// Vertices of cube:
 // F - FRONT | T - TOP  | L - left
 // B - Back  | D - Down | R - Right
 
@@ -68,11 +69,11 @@ void main() {
     color                = colors[0];
     shininess            = shininesses[0];
     
-    vec4  worldPos; // tmp register
-    #define EMIT_STRIP_VERTEX(shift) \
+    vec4 worldPos; // tmp register
+    #define EMIT_STRIP_VERTEX(shift)                                     \
         worldPos    = transformMatrix * vec4(nodeVertex.xyz + shift, 1); \
-        fragPos     = worldPos.xyz; \
-        gl_Position = viewProjection * worldPos; \
+        fragPos     = worldPos.xyz;                                      \
+        gl_Position = viewProjection * worldPos;                         \
         EmitVertex()
     
     EMIT_STRIP_VERTEX( BDL(stepSize) );

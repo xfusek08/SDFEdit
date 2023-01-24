@@ -120,7 +120,7 @@ void ModelVT::render(Scene& scene)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    auto& prg =renderProgram;
+    auto& prg = renderProgram;
     
     uint32* boxesRendered  = scene.vars->addOrGet<uint32>("boxesRendered", 0);
     uint32* modelsRendered = scene.vars->addOrGet<uint32>("modelsRendered", 0);
@@ -164,6 +164,8 @@ void ModelVT::render(Scene& scene)
             
             uint32 toRenderCount = cnt > 0 ? cnt : batch.toRenderNodes.size();
             *boxesRendered += toRenderCount;
+            
+            // TODO: use instanced rendering of cubes instead of generating cubes in geometry shader
             glDrawArrays(GL_POINTS, 0, toRenderCount);
         }
     };

@@ -1,6 +1,6 @@
 #version 460 core
 
-#define MAX_MODELS 1000 // maximum number of modes in view to limit size of constant memory for uniform block
+#define MAX_MODELS 1000 // maximum number of nodes in view to limit size of constant memory for uniform block
 
 struct Material {
     vec3 color;
@@ -12,8 +12,8 @@ layout (location = 0) in uint vertex_nodeIndex;
 layout (location = 1) in uint vertex_transformIndex;
 
 // to read data buffers
-layout(std430, binding = 2) buffer NodeDataPool    { uint nodeData[]; };
-layout(std430, binding = 3) buffer VertexBuffer    { vec4 nodeVertices[]; };
+layout(std430, binding = 2) buffer  NodeDataPool   { uint nodeData[]; };
+layout(std430, binding = 3) buffer  VertexBuffer   { vec4 nodeVertices[]; };
 layout(std140, binding = 4) uniform TransformBlock { mat4 transforms[MAX_MODELS]; }; // world translations uniform buffer block
 layout(std140, binding = 5) uniform MaterialBlock  { Material materials[MAX_MODELS]; };
 

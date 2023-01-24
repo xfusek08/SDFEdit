@@ -6,10 +6,10 @@ layout (line_strip, max_vertices = 16) out;
 in vec4 color[];
 out vec4 vcolor;
 
-// Half edge lenght of level 0 cube
+// Half edge length of level 0 cube
 #define D_0 0.5
 
-// 8 verticies in cube:
+// 8 vertices in cube:
 
 // F - FRONT | T - TOP  | L - left
 // B - Back  | D - Down | R - Right
@@ -38,9 +38,9 @@ void main() {
     // d = 0.5 / 2;
     
     // FIRST PRIMITIVE
-    #define EMIT_LINE_VERTEX(shift) \
-        gl_Position = viewProjection * vec4(position + shift, 1); \
-        vcolor = vec4(clamp(abs((position + shift).xyz) + 0.5, 0.5, 1) , 0.5);\
+    #define EMIT_LINE_VERTEX(shift)                                            \
+        gl_Position = viewProjection * vec4(position + shift, 1);              \
+        vcolor = vec4(clamp(abs((position + shift).xyz) + 0.5, 0.5, 1) , 0.5); \
         EmitVertex()
     
     EMIT_LINE_VERTEX( FTL(d) );

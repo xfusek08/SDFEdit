@@ -75,7 +75,9 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
     // -------------------------------------
     
     // init octree data structure which will be filled by following algorithm
-    auto octree = geometry.octree != nullptr ? geometry.octree : make_shared<SVOctree>(BRANCHING_FACTOR, 10000);
+    auto octree = geometry.octree != nullptr
+        ? geometry.octree
+        : make_shared<SVOctree>(BRANCHING_FACTOR, 10000);
     
     // init first level for algorithm runtime
     SVOctree::Level* currentLevel = octree->initFirstLevel();
@@ -97,10 +99,10 @@ std::shared_ptr<SVOctree> GeometryEvaluator::evaluateGeometry(const Geometry& ge
 
     // uniform: shift and scale SVO to be aligned with BB of the geometry`
     const glm::vec4 correctionVector = glm::vec4(geometry.getAABB().center(), geometry.getAABB().longestEdgeSize());
-    octreeEvaluationProgram.uniform("correctionVector", correctionVector);
-    octreeEvaluationProgram.uniform("editCount", uint32(geometry.readEdits().size()));
+    octreeEvaluationProgram.uniform("correctionVector",     correctionVector);
+    octreeEvaluationProgram.uniform("editCount",            uint32(geometry.readEdits().size()));
     octreeEvaluationProgram.uniform("bricksInOneDimension", octree->brickPool->bricksInOneDimension);
-    octreeInitiationProgram.uniform("correctionVector", correctionVector);
+    octreeInitiationProgram.uniform("correctionVector",     correctionVector);
     
     // Run evaluation algorithm
     // -------------------------

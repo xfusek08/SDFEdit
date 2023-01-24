@@ -22,7 +22,7 @@ void Renderer::prepare(Scene& scene)
         vt->prepare(scene);
     }
     // TODO: this could be done in parallel if concurent gl calls are allowed over one context
-    // if not separate context is needed for each VT to be evaluated concurrently or final gl calls will be in
+    // if not, separate context is needed for each VT to be evaluated concurrently or final gl calls will be
     // under a mutex.
 }
 
