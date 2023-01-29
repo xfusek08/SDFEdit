@@ -4,10 +4,6 @@ Project(SDFEdit)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/$<CONFIG>)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/build)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/build)
-
 add_subdirectory(vendor/RenderBase/RenderBase)
 add_subdirectory(vendor/GuiVars)
 add_subdirectory(vendor/Json)
@@ -37,5 +33,22 @@ load_resource_definitions(resources RESOURCES_DEBUG_DEFINITIONS RESOURCES_RELEAS
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     $<$<CONFIG:Debug>:DEBUG ${RESOURCES_DEBUG_DEFINITIONS}>
-    $<$<CONFIG:Release>:NDEBUG RELEASE NO_ASSERT NO_LOGS ${RESOURCES_RELEASE_DEFINITIONS}>
+    $<$<CONFIG:Release>:NDEBUG RELEASE NO_ASSERT NO_LOG ${RESOURCES_RELEASE_DEFINITIONS}>
+)
+
+# Ensure that on release build we copy resources to build directory because release build is using relative path to resources
+# Implementation based on:
+#   https://stackoverflow.com/a/46439715
+# and on
+#   https://stackoverflow.com/a/13429998
+set(no_copy $<NOT:$<CONFIG:Release>>)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E
+        $<${no_copy}:echo>
+        $<${no_copy}:"copy omitted for non-release build, command would have been ">
+        remove_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
+    COMMAND "${CMAKE_COMMAND}" -E
+        $<${no_copy}:echo>
+        $<${no_copy}:"copy omitted for non-release build, command would have been ">
+        copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
 )
