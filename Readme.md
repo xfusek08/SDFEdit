@@ -56,8 +56,6 @@ make -j
 This is an extract from documentation.
 To full documentation can be seen [here](doc/project.pdf).
 
-Despite low self-evaluation full 30/30 points were awarded 😉.
-
 ### Introduction
 
 This semester project is developed as a shared project for two classes: "GMU - Graphic and Multimedia Processors" and "PGPa - Advanced Computer Graphics".
@@ -104,6 +102,11 @@ The basic idea is to have the geometry of a 3D model represented by "Constructiv
 
 ## Authors
 [Petr Fusek](https://github.com/xfusek08)
+
+### Evaluation
+
+- GMU - Graphic and Multimedia Processors: 28/28 🥳
+- PGPa - Advanced Computer Graphics: 30/30 🥳
 
 ## Vendor libraries used
 
