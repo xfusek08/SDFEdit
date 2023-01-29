@@ -57,7 +57,7 @@ class Application : public app::BasicOpenGLApplication
         // App general settings
         // --------------------
         
-        scene = prepareShaderSceneData(sceneNames[a]);
+        scene = prepareSharedSceneData(sceneNames[a]);
         // scene = make_shared<Scene>();
         
         // scene switching
@@ -169,7 +169,7 @@ class Application : public app::BasicOpenGLApplication
         auto reloadTo = scene->vars->addOrGet<const char*>("reloadTo", nullptr);
         if (*reloadTo != nullptr) {
             testBench->boundarries = AABB(glm::vec3(-1), glm::vec3(1));
-            auto newScene = scene->vars->getEnum<Scenes>("scene") == stress ? loadStressScene() : prepareShaderSceneData(*reloadTo);
+            auto newScene = scene->vars->getEnum<Scenes>("scene") == stress ? loadStressScene() : prepareSharedSceneData(*reloadTo);
             newScene->cameraController = move(scene->cameraController);
             newScene->vars = move(scene->vars);
             scene = newScene;

@@ -82,7 +82,7 @@ inline string getString(Json json, string ident, string defaultValue = "")
     return getScalar<string>(json, ident, defaultValue);
 }
 
-shared_ptr<Scene> prepareShaderSceneData(string fileName)
+shared_ptr<Scene> prepareSharedSceneData(string fileName)
 {
     // load json
     Json json;
