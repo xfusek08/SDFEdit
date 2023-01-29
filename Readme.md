@@ -103,7 +103,7 @@ The basic idea is to have the geometry of a 3D model represented by "Constructiv
 ## Authors
 [Petr Fusek](https://github.com/xfusek08)
 
-### Evaluation
+## Project Evaluation
 
 - GMU - Graphic and Multimedia Processors: 28/28 🥳
 - PGPa - Advanced Computer Graphics: 30/30 🥳
