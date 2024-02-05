@@ -54,7 +54,7 @@ make -j
 ## About
 
 This is an extract from documentation.
-To full documentation can be seen [here](doc/project.pdf).
+Full documentation can be seen [here](doc/project.pdf).
 
 ### Introduction
 
