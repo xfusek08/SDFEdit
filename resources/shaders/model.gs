@@ -54,7 +54,7 @@ mat4 scale(float scaling) {
 }
 
 void main() {
-    // output common to whore node
+    // output props common to the whole node
     
     vec4  nodeVertex        = gl_in[0].gl_Position;
     float brickInvertedSize = 1.0 / nodeVertex.w;

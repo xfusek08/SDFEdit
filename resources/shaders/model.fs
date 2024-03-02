@@ -10,7 +10,7 @@
 //        - This is the default space in which ray marching takes place.
 //        - brick has to be in octree space and then is shifted so its minimal corner is at the origin
 
-#define MAX_STEPS     50   // After N steps will marching algorithm ended event if marcher did not stepped out of the bricks volume
+#define MAX_STEPS     50   // After N steps marching algorithm will end even if marcher did not stepped out of the bricks volume
 #define NORMAL_OFFSET 0.06 // Normal difference distance to properly sample brick volume - optimized for 8x8x8 brick (without border)
 #define HIT_DISTANCE  0.01 // Distance from surface considered as hit.
 
@@ -81,7 +81,7 @@ vec4 getHitColor(vec3 pos, vec3 normal) {
     return vec4(result, 1.0);
 }
 
-// Founds length of ray until it exits the rendered cube
+// Finds length of ray until it exits the rendered cube
 // Computed in ray-marcher space
 // This function was inspired by:
 //    https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
